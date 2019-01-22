@@ -1,0 +1,1 @@
+**ALog - Fast and asynchronous logger.** 
