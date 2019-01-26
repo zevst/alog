@@ -76,7 +76,7 @@ func (a *aLog) Wrn(msg string) {
 
 func (a *aLog) Err(err error) {
 	if err != nil {
-		a.Loggers[loggerErr].channel <- fmt.Sprintf("%s\n%s\n", prepareLog(err.Error()), string(debug.Stack()))
+		a.Loggers[loggerErr].channel <- fmt.Sprintf("%s\n%s\n---\n\n", prepareLog(err.Error()), string(debug.Stack()))
 	}
 }
 
