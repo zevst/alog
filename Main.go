@@ -1,11 +1,11 @@
 package alog
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -70,6 +70,16 @@ func (a *aLog) Info(msg string) {
 	a.Loggers[loggerInfo].channel <- prepareLog(msg)
 }
 
+func (a *aLog) Wrn(msg string) {
+	a.Loggers[loggerWrn].channel <- prepareLog(msg)
+}
+
+func (a *aLog) Err(err error) {
+	if err != nil {
+		a.Loggers[loggerErr].channel <- fmt.Sprintf("%s\n%s\n", prepareLog(err.Error()), string(debug.Stack()))
+	}
+}
+
 func (a *aLog) getLoggers() []logger {
 	a.Loggers = []logger{
 		{
@@ -109,14 +119,18 @@ func Get() *aLog {
 
 func prepareLog(msg string) string {
 	_, fileName, fileLine, ok := runtime.Caller(2)
-	if !ok {
-		fatalError(errors.New("runtime.Caller fail"))
+	if ok {
+		return fmt.Sprintf(
+			"%s;%s:%d;%s\n",
+			time.Now().Format(time.RFC3339),
+			fileName,
+			fileLine,
+			msg,
+		)
 	}
 	return fmt.Sprintf(
-		"%s %s:%d %s\n",
+		"%s;;%s\n",
 		time.Now().Format(time.RFC3339),
-		fileName,
-		fileLine,
 		msg,
 	)
 }
