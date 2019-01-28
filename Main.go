@@ -2,6 +2,7 @@ package alog
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"runtime"
@@ -30,6 +31,20 @@ const (
 
 var self *aLog
 var instance sync.Once
+var configurator sync.Once
+
+func getEnv(key string) []byte {
+	configurator.Do(func() {
+		if err := godotenv.Load(); err != nil {
+			log.Fatalln(err)
+		}
+	})
+	return []byte(os.Getenv(key))
+}
+
+func getEnvStr(key string) string {
+	return string(getEnv(key))
+}
 
 type logger struct {
 	class    uint
@@ -66,17 +81,17 @@ type aLog struct {
 	Loggers []logger
 }
 
-func (a *aLog) Info(msg string) {
-	a.Loggers[loggerInfo].channel <- prepareLog(msg)
+func Info(msg string) {
+	get().Loggers[loggerInfo].channel <- prepareLog(msg)
 }
 
-func (a *aLog) Wrn(msg string) {
-	a.Loggers[loggerWrn].channel <- prepareLog(msg)
+func Wrn(msg string) {
+	get().Loggers[loggerWrn].channel <- prepareLog(msg)
 }
 
-func (a *aLog) Err(err error) {
+func Err(err error) {
 	if err != nil {
-		a.Loggers[loggerErr].channel <- fmt.Sprintf("%s\n%s\n---\n\n", prepareLog(err.Error()), string(debug.Stack()))
+		get().Loggers[loggerErr].channel <- fmt.Sprintf("%s\n%s\n---\n\n", prepareLog(err.Error()), string(debug.Stack()))
 	}
 }
 
@@ -84,17 +99,17 @@ func (a *aLog) getLoggers() []logger {
 	a.Loggers = []logger{
 		{
 			class:    loggerInfo,
-			filePath: GetEnvStr(keyInfo),
+			filePath: getEnvStr(keyInfo),
 			channel:  make(chan string, 100),
 		},
 		{
 			class:    loggerWrn,
-			filePath: GetEnvStr(keyWrn),
+			filePath: getEnvStr(keyWrn),
 			channel:  make(chan string, 100),
 		},
 		{
 			class:    loggerErr,
-			filePath: GetEnvStr(keyErr),
+			filePath: getEnvStr(keyErr),
 			channel:  make(chan string, 100),
 		},
 	}
@@ -109,7 +124,7 @@ func (a *aLog) create() {
 	}
 }
 
-func Get() *aLog {
+func get() *aLog {
 	instance.Do(func() {
 		self = new(aLog)
 		self.create()
