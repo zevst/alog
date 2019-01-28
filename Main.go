@@ -85,14 +85,26 @@ func Info(msg string) {
 	get().Loggers[loggerInfo].channel <- prepareLog(msg)
 }
 
-func Wrn(msg string) {
+func Infof(format string, a ...interface{}) {
+	Info(fmt.Sprintf(format, a...))
+}
+
+func Warning(msg string) {
 	get().Loggers[loggerWrn].channel <- prepareLog(msg)
 }
 
-func Err(err error) {
+func Warningf(format string, a ...interface{}) {
+	Warning(fmt.Sprintf(format, a...))
+}
+
+func Error(err error) {
 	if err != nil {
 		get().Loggers[loggerErr].channel <- fmt.Sprintf("%s\n%s\n---\n\n", prepareLog(err.Error()), string(debug.Stack()))
 	}
+}
+
+func Errorf(format string, a ...interface{}) {
+	Error(fmt.Errorf(format, a...))
 }
 
 func (a *aLog) getLoggers() []logger {
