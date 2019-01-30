@@ -88,9 +88,9 @@ type aLog struct {
 
 // Writer interface for informational messages
 // If you need a writer interface for other types of messages, please write me :)
-func (w *aLog) Write(p []byte) (n int, err error) {
+func (l *logger) Write(p []byte) (n int, err error) {
 	msg := string(p)
-	get().Loggers[loggerInfo].channel <- msg
+	l.channel <- msg
 	return utf8.RuneCountInString(msg), nil
 }
 
