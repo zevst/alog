@@ -51,14 +51,14 @@ func getEnvStr(key string) string {
 	return string(getEnv(key))
 }
 
-type logger struct {
+type Logger struct {
 	class    uint
 	filePath string
 	file     *os.File
 	channel  chan string
 }
 
-func (l *logger) addLogger(logType uint, filePath string) *logger {
+func (l *Logger) addLogger(logType uint, filePath string) *Logger {
 	if addDirectory(filePath) {
 		if file, err := openFile(filePath); err == nil {
 			l.file = file
@@ -69,7 +69,7 @@ func (l *logger) addLogger(logType uint, filePath string) *logger {
 	return l
 }
 
-func (l *logger) conveyor() {
+func (l *Logger) conveyor() {
 	defer func() {
 		fatalError(l.file.Close())
 	}()
@@ -83,28 +83,28 @@ func (l *logger) conveyor() {
 }
 
 type aLog struct {
-	Loggers []logger
+	Loggers []Logger
 }
 
 // Writer interface for informational messages
-func (l *logger) Write(p []byte) (n int, err error) {
+func (l *Logger) Write(p []byte) (n int, err error) {
 	msg := string(p)
 	l.channel <- msg
 	return utf8.RuneCountInString(msg), nil
 }
 
 // Returns the info channel to write
-func GetInfoLogger() *logger {
+func GetInfoLogger() *Logger {
 	return &get().Loggers[loggerInfo]
 }
 
 // Returns the warning channel to write
-func GetWarningLogger() *logger {
+func GetWarningLogger() *Logger {
 	return &get().Loggers[loggerWrn]
 }
 
 // Returns the error channel to write
-func GetErrorLogger() *logger {
+func GetErrorLogger() *Logger {
 	return &get().Loggers[loggerErr]
 }
 
@@ -130,8 +130,8 @@ func Error(err error) {
 	}
 }
 
-func (a *aLog) getLoggers() []logger {
-	a.Loggers = []logger{
+func (a *aLog) getLoggers() []Logger {
+	a.Loggers = []Logger{
 		{
 			class:    loggerInfo,
 			filePath: getEnvStr(keyInfo),
