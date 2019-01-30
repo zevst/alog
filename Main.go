@@ -1,3 +1,7 @@
+// Author:   Nikita Koryabkin
+// Email:    Nikita@Koryabk.in
+// Telegram: https://t.me/Apologiz
+
 package alog
 
 import (
@@ -10,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 const (
@@ -81,30 +86,34 @@ type aLog struct {
 	Loggers []logger
 }
 
+// Writer interface for informational messages
+// If you need a writer interface for other types of messages, please write me :)
+func (w *aLog) Write(p []byte) (n int, err error) {
+	msg := string(p)
+	get().Loggers[loggerInfo].channel <- msg
+	return utf8.RuneCountInString(msg), nil
+}
+
+// Method for recording informational messages
 func Info(msg string) {
 	get().Loggers[loggerInfo].channel <- prepareLog(msg)
 }
 
+// Method of recording formatted informational messages
 func Infof(format string, a ...interface{}) {
-	Info(fmt.Sprintf(format, a...))
+	get().Loggers[loggerInfo].channel <- prepareLog(fmt.Sprintf(format, a...))
 }
 
+// Method for recording warning messages
 func Warning(msg string) {
 	get().Loggers[loggerWrn].channel <- prepareLog(msg)
 }
 
-func Warningf(format string, a ...interface{}) {
-	Warning(fmt.Sprintf(format, a...))
-}
-
+// Method for recording errors with stack
 func Error(err error) {
 	if err != nil {
 		get().Loggers[loggerErr].channel <- fmt.Sprintf("%s\n%s\n---\n\n", prepareLog(err.Error()), string(debug.Stack()))
 	}
-}
-
-func Errorf(format string, a ...interface{}) {
-	Error(fmt.Errorf(format, a...))
 }
 
 func (a *aLog) getLoggers() []logger {
