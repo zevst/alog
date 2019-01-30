@@ -87,32 +87,46 @@ type aLog struct {
 }
 
 // Writer interface for informational messages
-// If you need a writer interface for other types of messages, please write me :)
 func (l *logger) Write(p []byte) (n int, err error) {
 	msg := string(p)
 	l.channel <- msg
 	return utf8.RuneCountInString(msg), nil
 }
 
+// Returns the info channel to write
+func GetInfoLogger() *logger {
+	return &get().Loggers[loggerInfo]
+}
+
+// Returns the warning channel to write
+func GetWarningLogger() *logger {
+	return &get().Loggers[loggerWrn]
+}
+
+// Returns the error channel to write
+func GetErrorLogger() *logger {
+	return &get().Loggers[loggerErr]
+}
+
 // Method for recording informational messages
 func Info(msg string) {
-	get().Loggers[loggerInfo].channel <- prepareLog(msg)
+	GetInfoLogger().channel <- prepareLog(msg)
 }
 
 // Method of recording formatted informational messages
 func Infof(format string, a ...interface{}) {
-	get().Loggers[loggerInfo].channel <- prepareLog(fmt.Sprintf(format, a...))
+	GetInfoLogger().channel <- prepareLog(fmt.Sprintf(format, a...))
 }
 
 // Method for recording warning messages
 func Warning(msg string) {
-	get().Loggers[loggerWrn].channel <- prepareLog(msg)
+	GetWarningLogger().channel <- prepareLog(msg)
 }
 
 // Method for recording errors with stack
 func Error(err error) {
 	if err != nil {
-		get().Loggers[loggerErr].channel <- fmt.Sprintf("%s\n%s\n---\n\n", prepareLog(err.Error()), string(debug.Stack()))
+		GetErrorLogger().channel <- fmt.Sprintf("%s\n%s\n---\n\n", prepareLog(err.Error()), string(debug.Stack()))
 	}
 }
 
