@@ -1,6 +1,7 @@
 **ALog - Fast and asynchronous logger.**
 
 [Install](#install)
+
 [Configure](#configure)
 
 # Install
