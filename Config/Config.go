@@ -1,8 +1,13 @@
+////////////////////////////////////////////////////////////////////////////////
+// Author:   Nikita Koryabkin
+// Email:    Nikita@Koryabk.in
+// Telegram: https://t.me/Apologiz
+////////////////////////////////////////////////////////////////////////////////
+
 package Config
 
 import (
 	"github.com/joho/godotenv"
-	"log"
 	"os"
 	"sync"
 )
@@ -11,9 +16,7 @@ var configurator sync.Once
 
 func GetEnv(key string) []byte {
 	configurator.Do(func() {
-		if err := godotenv.Load(); err != nil {
-			log.Fatalln(err)
-		}
+		_ = godotenv.Load()
 	})
 	return []byte(os.Getenv(key))
 }

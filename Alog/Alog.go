@@ -1,6 +1,8 @@
+////////////////////////////////////////////////////////////////////////////////
 // Author:   Nikita Koryabkin
 // Email:    Nikita@Koryabk.in
 // Telegram: https://t.me/Apologiz
+////////////////////////////////////////////////////////////////////////////////
 
 package Alog
 
@@ -8,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -27,12 +30,26 @@ const (
 	filePermission = 0755
 )
 
+var loggerName = map[uint]string{
+	LoggerInfo: "Info",
+	LoggerWrn:  "Warning",
+	LoggerErr:  "Error",
+}
+
+// LoggerName returns a name for the logger.
+// It returns the empty string if the code is unknown.
+func LoggerName(code uint) string {
+	return loggerName[code]
+}
+
 type Log struct {
 	config *Config
 }
 
 type Config struct {
-	Loggers LoggerMap
+	LogFileLine bool
+	TimeFormat  string
+	Loggers     LoggerMap
 }
 
 type LoggerMap map[uint]*Logger
@@ -55,13 +72,13 @@ func (l *Logger) Write(p []byte) (n int, err error) {
 type DefaultStrategy struct {
 }
 
-func GetDefaultStrategy() *DefaultStrategy {
+func GetDefaultStrategy() io.Writer {
 	return &DefaultStrategy{}
 }
 
 func (s *DefaultStrategy) Write(p []byte) (n int, err error) {
 	msg := string(p)
-	fmt.Println(msg)
+	log.Println(msg)
 	return utf8.RuneCountInString(msg), nil
 }
 
@@ -69,15 +86,15 @@ type FileStrategy struct {
 	file *os.File
 }
 
-func GetFileStrategy(filePath string) *FileStrategy {
+func GetFileStrategy(filePath string) io.Writer {
 	if addDirectory(filePath) {
-		if file, err := openFile(filePath); err == nil {
+		file, err := openFile(filePath)
+		if err == nil {
 			return &FileStrategy{
 				file: file,
 			}
-		} else {
-			fmt.Println(err)
 		}
+		log.Println(err)
 	}
 	return nil
 }
@@ -93,9 +110,11 @@ func Create(config *Config) *Log {
 				select {
 				case msg := <-logger.Channel:
 					for _, strategy := range logger.Strategies {
-						n, err := strategy.Write([]byte(msg))
-						if err != nil {
-							fmt.Println(n, err)
+						if strategy == nil {
+							continue
+						}
+						if n, err := strategy.Write([]byte(msg)); err != nil {
+							log.Println(n, err)
 						}
 					}
 				}
@@ -107,49 +126,76 @@ func Create(config *Config) *Log {
 	}
 }
 
-// Returns the info channel to write
-func (a *Log) GetInfoLogger() *Logger {
-	return a.config.Loggers[LoggerInfo]
-}
-
-// Returns the warning channel to write
-func (a *Log) GetWarningLogger() *Logger {
-	return a.config.Loggers[LoggerWrn]
-}
-
-// Returns the error channel to write
-func (a *Log) GetErrorLogger() *Logger {
-	return a.config.Loggers[LoggerErr]
-}
-
 // Method for recording informational messages
-func (a *Log) Info(msg string) {
-	a.GetInfoLogger().Channel <- prepareLog(msg)
+func (a *Log) Info(msg string) *Log {
+	if a.config.Loggers[LoggerInfo] != nil {
+		a.config.Loggers[LoggerInfo].Channel <- a.prepareLog(msg)
+	} else {
+		printNotConfiguredMessage(LoggerInfo)
+	}
+	return a
+}
+
+func printNotConfiguredMessage(code uint) {
+	log.Println(fmt.Sprintf("Logger %s not configured", LoggerName(code)))
 }
 
 // Method of recording formatted informational messages
-func (a *Log) Infof(format string, p ...interface{}) {
-	a.GetInfoLogger().Channel <- prepareLog(fmt.Sprintf(format, p...))
+func (a *Log) Infof(format string, p ...interface{}) *Log {
+	if a.config.Loggers[LoggerInfo] != nil {
+		a.config.Loggers[LoggerInfo].Channel <- a.prepareLog(fmt.Sprintf(format, p...))
+	} else {
+		printNotConfiguredMessage(LoggerInfo)
+	}
+	return a
 }
 
 // Method for recording warning messages
-func (a *Log) Warning(msg string) {
-	a.GetWarningLogger().Channel <- prepareLog(msg)
+func (a *Log) Warning(msg string) *Log {
+	if a.config.Loggers[LoggerWrn] != nil {
+		a.config.Loggers[LoggerWrn].Channel <- a.prepareLog(msg)
+	} else {
+		printNotConfiguredMessage(LoggerWrn)
+	}
+	return a
 }
 
 // Method for recording errors with stack
-func (a *Log) Error(err error) {
-	if err != nil {
-		a.GetErrorLogger().Channel <- fmt.Sprintf("%s\n%s\n---\n\n", prepareLog(err.Error()), string(debug.Stack()))
+func (a *Log) Error(err error, printDebug bool) *Log {
+	if err != nil && a.config.Loggers[LoggerErr] != nil {
+		if printDebug {
+			a.config.Loggers[LoggerErr].Channel <- fmt.Sprintf("%s\n%s\n---\n\n", a.prepareLog(err.Error()), string(debug.Stack()))
+		} else {
+			a.config.Loggers[LoggerErr].Channel <- a.prepareLog(err.Error())
+		}
+	} else if err != nil {
+		printNotConfiguredMessage(LoggerErr)
+		log.Println(err)
+	} else {
+		printNotConfiguredMessage(LoggerErr)
 	}
+	return a
 }
 
-func prepareLog(msg string) string {
-	_, fileName, fileLine, ok := runtime.Caller(2)
-	if ok {
+func (a *Log) getTimeFormat() string {
+	if format := a.config.TimeFormat; format != "" {
+		return format
+	}
+	return time.RFC3339Nano
+}
+
+func (a *Log) prepareLog(msg string) string {
+	if !a.config.LogFileLine {
+		return fmt.Sprintf(
+			"%s;%s\n",
+			time.Now().Format(a.getTimeFormat()),
+			msg,
+		)
+	}
+	if _, fileName, fileLine, ok := runtime.Caller(2); ok {
 		return fmt.Sprintf(
 			"%s;%s:%d;%s\n",
-			time.Now().Format(time.RFC3339),
+			time.Now().Format(a.getTimeFormat()),
 			fileName,
 			fileLine,
 			msg,
@@ -157,7 +203,7 @@ func prepareLog(msg string) string {
 	}
 	return fmt.Sprintf(
 		"%s;;%s\n",
-		time.Now().Format(time.RFC3339),
+		time.Now().Format(a.getTimeFormat()),
 		msg,
 	)
 }
@@ -175,6 +221,10 @@ func createDirectoryIfNotExist(dirPath string) error {
 }
 
 func addDirectory(filePath string) bool {
+	if filePath == "" {
+		log.Println(fmt.Sprintf("Can't create directory: '%s'", filePath))
+		return false
+	}
 	path := strings.Split(filePath, "/")
 	err := createDirectoryIfNotExist(strings.Join(path[:len(path)-1], "/"))
 	return err == nil

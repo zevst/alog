@@ -1,0 +1,16 @@
+version: '3.4'
+
+services:
+  alog:
+    build: .
+    container_name: alog
+    environment:
+      ALOG_LOGGER_INFO: /tmp/logs/info.log
+      ALOG_LOGGER_WARNING: /tmp/logs/warning.log
+      ALOG_LOGGER_ERROR: /tmp/logs/error.log
+    restart: on-failure
+    working_dir: /go/src/alog
+    volumes:
+      - ./var/logs/:/tmp/logs
+    ports:
+      - "8082:80"
