@@ -31,29 +31,41 @@ func GetLogger() *Alog.Log {
 			TimeFormat:  time.RFC3339Nano,
 			LogFileLine: false,
 			Loggers: Alog.LoggerMap{
-				Alog.LoggerInfo: {
-					Channel: make(chan string, 100),
-					Strategies: []io.Writer{
-						Alog.GetFileStrategy(Config.GetEnvStr(keyInfo)),
-						Alog.GetDefaultStrategy(),
-					},
-				},
-				Alog.LoggerWrn: {
-					Channel: make(chan string, 100),
-					Strategies: []io.Writer{
-						Alog.GetFileStrategy(Config.GetEnvStr(keyWrn)),
-						Alog.GetDefaultStrategy(),
-					},
-				},
-				Alog.LoggerErr: {
-					Channel: make(chan string, 100),
-					Strategies: []io.Writer{
-						Alog.GetFileStrategy(Config.GetEnvStr(keyErr)),
-						Alog.GetDefaultStrategy(),
-					},
-				},
+				Alog.LoggerInfo: getInfoLogger(),
+				Alog.LoggerWrn:  getWarningLogger(),
+				Alog.LoggerErr:  getErrorLogger(),
 			},
 		})
 	})
 	return logger.instance
+}
+
+func getInfoLogger() *Alog.Logger {
+	return &Alog.Logger{
+		Channel: make(chan string, 100),
+		Strategies: []io.Writer{
+			Alog.GetFileStrategy(Config.GetEnvStr(keyInfo)),
+			Alog.GetDefaultStrategy(),
+		},
+	}
+}
+
+func getWarningLogger() *Alog.Logger {
+	return &Alog.Logger{
+		Channel: make(chan string, 100),
+		Strategies: []io.Writer{
+			Alog.GetFileStrategy(Config.GetEnvStr(keyWrn)),
+			Alog.GetDefaultStrategy(),
+		},
+	}
+}
+
+func getErrorLogger() *Alog.Logger {
+	return &Alog.Logger{
+		Channel: make(chan string, 100),
+		Strategies: []io.Writer{
+			Alog.GetFileStrategy(Config.GetEnvStr(keyErr)),
+			Alog.GetDefaultStrategy(),
+		},
+	}
 }
