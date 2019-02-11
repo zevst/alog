@@ -6,5 +6,6 @@
 
 # Install
 ```
-go get -u github.com/mylockerteam/aLog
+go get -u github.com/mylockerteam/alog
+
 ```

@@ -4,7 +4,7 @@
 // Telegram: https://t.me/Apologiz
 ////////////////////////////////////////////////////////////////////////////////
 
-package Alog
+package alog
 
 import (
 	"errors"
@@ -72,6 +72,7 @@ func (l *Logger) Write(p []byte) (n int, err error) {
 type DefaultStrategy struct {
 }
 
+// console write strategy
 func GetDefaultStrategy() io.Writer {
 	return &DefaultStrategy{}
 }
@@ -85,6 +86,7 @@ type FileStrategy struct {
 	file *os.File
 }
 
+// file write strategy
 func GetFileStrategy(filePath string) io.Writer {
 	if addDirectory(filePath) {
 		file, err := openFile(filePath)
@@ -105,6 +107,7 @@ func (s *FileStrategy) Write(p []byte) (n int, err error) {
 	return 0, errors.New("file not defined")
 }
 
+// creates an instance of the logger
 func Create(config *Config) *Log {
 	for _, logger := range config.Loggers {
 		go func(logger *Logger) {
