@@ -1,4 +1,5 @@
 /.idea/
 /vendor/
 /.env
-/var
+/var/
+/dist/

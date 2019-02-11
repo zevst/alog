@@ -77,9 +77,8 @@ func GetDefaultStrategy() io.Writer {
 }
 
 func (s *DefaultStrategy) Write(p []byte) (n int, err error) {
-	msg := string(p)
-	log.Println(msg)
-	return utf8.RuneCountInString(msg), nil
+	log.Println(string(p))
+	return len(p), nil
 }
 
 type FileStrategy struct {
@@ -96,11 +95,14 @@ func GetFileStrategy(filePath string) io.Writer {
 		}
 		log.Println(err)
 	}
-	return nil
+	return &FileStrategy{}
 }
 
 func (s *FileStrategy) Write(p []byte) (n int, err error) {
-	return s.file.Write(p)
+	if s.file != nil {
+		return s.file.Write(p)
+	}
+	return 0, errors.New("file not defined")
 }
 
 func Create(config *Config) *Log {
@@ -110,11 +112,8 @@ func Create(config *Config) *Log {
 				select {
 				case msg := <-logger.Channel:
 					for _, strategy := range logger.Strategies {
-						if strategy == nil {
-							continue
-						}
 						if n, err := strategy.Write([]byte(msg)); err != nil {
-							log.Println(n, err)
+							log.Println(fmt.Sprintf("%d characters have been written. %s", n, err.Error()))
 						}
 					}
 				}
