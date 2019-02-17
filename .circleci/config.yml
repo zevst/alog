@@ -3,6 +3,9 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.9
+    environment:
+      ORG_NAME: mylockerteam
+      REPO_NAME: alog
     working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     steps:
       - checkout
