@@ -12,11 +12,16 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"runtime/debug"
-	"strings"
 	"time"
-	"unicode/utf8"
+
+	"github.com/spf13/afero"
+)
+
+const (
+	ErrCanNotCreateDirectory = "can't create directory"
 )
 
 const (
@@ -29,18 +34,6 @@ const (
 	fileOptions    = os.O_CREATE | os.O_APPEND | os.O_WRONLY
 	filePermission = 0755
 )
-
-var loggerName = map[uint]string{
-	LoggerInfo: "Info",
-	LoggerWrn:  "Warning",
-	LoggerErr:  "Error",
-}
-
-// LoggerName returns a name for the logger.
-// It returns the empty string if the code is unknown.
-func LoggerName(code uint) string {
-	return loggerName[code]
-}
 
 type Log struct {
 	config *Config
@@ -59,17 +52,38 @@ type Logger struct {
 	Strategies []io.Writer
 }
 
+type DefaultStrategy struct {
+}
+
+type FileStrategy struct {
+	file afero.File
+}
+
+var fs = afero.NewOsFs()
+
+var loggerName = map[uint]string{
+	LoggerInfo: "Info",
+	LoggerWrn:  "Warning",
+	LoggerErr:  "Error",
+}
+
+func (l *Logger) addStrategy(strategy io.Writer) {
+	l.Strategies = append(l.Strategies, strategy)
+}
+
+// LoggerName returns a name for the logger.
+// It returns the empty string if the code is unknown.
+func LoggerName(code uint) string {
+	return loggerName[code]
+}
+
 // Writer interface for informational messages
 func (l *Logger) Write(p []byte) (n int, err error) {
 	if l != nil {
-		msg := string(p)
-		l.Channel <- msg
-		return utf8.RuneCountInString(msg), nil
+		l.Channel <- string(p)
+		return len(p), nil
 	}
 	return 0, errors.New("the channel was closed for recording")
-}
-
-type DefaultStrategy struct {
 }
 
 // console write strategy
@@ -82,13 +96,9 @@ func (s *DefaultStrategy) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-type FileStrategy struct {
-	file *os.File
-}
-
 // file write strategy
 func GetFileStrategy(filePath string) io.Writer {
-	if addDirectory(filePath) {
+	if addDirectory(filePath) == nil {
 		file, err := openFile(filePath)
 		if err == nil {
 			return &FileStrategy{
@@ -131,7 +141,7 @@ func Create(config *Config) *Log {
 // Method for recording informational messages
 func (a *Log) Info(msg string) *Log {
 	if a.config.Loggers[LoggerInfo] != nil {
-		a.config.Loggers[LoggerInfo].Channel <- a.prepareLog(msg)
+		a.config.Loggers[LoggerInfo].Channel <- a.prepareLog(time.Now(), msg)
 	} else {
 		printNotConfiguredMessage(LoggerInfo)
 	}
@@ -145,7 +155,7 @@ func printNotConfiguredMessage(code uint) {
 // Method of recording formatted informational messages
 func (a *Log) Infof(format string, p ...interface{}) *Log {
 	if a.config.Loggers[LoggerInfo] != nil {
-		a.config.Loggers[LoggerInfo].Channel <- a.prepareLog(fmt.Sprintf(format, p...))
+		a.config.Loggers[LoggerInfo].Channel <- a.prepareLog(time.Now(), fmt.Sprintf(format, p...))
 	} else {
 		printNotConfiguredMessage(LoggerInfo)
 	}
@@ -155,7 +165,7 @@ func (a *Log) Infof(format string, p ...interface{}) *Log {
 // Method for recording warning messages
 func (a *Log) Warning(msg string) *Log {
 	if a.config.Loggers[LoggerWrn] != nil {
-		a.config.Loggers[LoggerWrn].Channel <- a.prepareLog(msg)
+		a.config.Loggers[LoggerWrn].Channel <- a.prepareLog(time.Now(), msg)
 	} else {
 		printNotConfiguredMessage(LoggerWrn)
 	}
@@ -166,9 +176,9 @@ func (a *Log) Warning(msg string) *Log {
 func (a *Log) Error(err error, printDebug bool) *Log {
 	if err != nil && a.config.Loggers[LoggerErr] != nil {
 		if printDebug {
-			a.config.Loggers[LoggerErr].Channel <- fmt.Sprintf("%s\n%s\n---\n\n", a.prepareLog(err.Error()), string(debug.Stack()))
+			a.config.Loggers[LoggerErr].Channel <- fmt.Sprintf("%s\n%s\n---\n\n", a.prepareLog(time.Now(), err.Error()), string(debug.Stack()))
 		} else {
-			a.config.Loggers[LoggerErr].Channel <- a.prepareLog(err.Error())
+			a.config.Loggers[LoggerErr].Channel <- a.prepareLog(time.Now(), err.Error())
 		}
 	} else if err != nil {
 		printNotConfiguredMessage(LoggerErr)
@@ -186,18 +196,18 @@ func (a *Log) getTimeFormat() string {
 	return time.RFC3339Nano
 }
 
-func (a *Log) prepareLog(msg string) string {
+func (a *Log) prepareLog(time time.Time, msg string) string {
 	if !a.config.LogFileLine {
 		return fmt.Sprintf(
 			"%s;%s\n",
-			time.Now().Format(a.getTimeFormat()),
+			time.Format(a.getTimeFormat()),
 			msg,
 		)
 	}
 	if _, fileName, fileLine, ok := runtime.Caller(2); ok {
 		return fmt.Sprintf(
 			"%s;%s:%d;%s\n",
-			time.Now().Format(a.getTimeFormat()),
+			time.Format(a.getTimeFormat()),
 			fileName,
 			fileLine,
 			msg,
@@ -205,29 +215,30 @@ func (a *Log) prepareLog(msg string) string {
 	}
 	return fmt.Sprintf(
 		"%s;;%s\n",
-		time.Now().Format(a.getTimeFormat()),
+		time.Format(a.getTimeFormat()),
 		msg,
 	)
 }
 
-func openFile(filePath string) (*os.File, error) {
-	return os.OpenFile(filePath, fileOptions, filePermission)
+func openFile(filePath string) (afero.File, error) {
+	if filePath == "" {
+		return nil, afero.ErrFileNotFound
+	}
+	return fs.OpenFile(filePath, fileOptions, filePermission)
 }
 
 func createDirectoryIfNotExist(dirPath string) error {
-	_, err := os.Stat(dirPath)
+	_, err := fs.Stat(dirPath)
 	if os.IsNotExist(err) {
-		return os.MkdirAll(dirPath, filePermission)
+		return fs.MkdirAll(dirPath, filePermission)
 	}
 	return err
 }
 
-func addDirectory(filePath string) bool {
+func addDirectory(filePath string) error {
 	if filePath == "" {
-		log.Println(fmt.Sprintf("Can't create directory: '%s'", filePath))
-		return false
+		return errors.New(ErrCanNotCreateDirectory)
 	}
-	path := strings.Split(filePath, "/")
-	err := createDirectoryIfNotExist(strings.Join(path[:len(path)-1], "/"))
-	return err == nil
+	dir, _ := filepath.Split(filePath)
+	return createDirectoryIfNotExist(dir)
 }

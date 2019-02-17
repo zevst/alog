@@ -55,26 +55,6 @@
   version = "v1.1.5"
 
 [[projects]]
-  digest = "1:aaa8e0e7e35d92e21daed3f241832cee73d15ca1cd3302ba3843159a959a7eac"
-  name = "github.com/klauspost/compress"
-  packages = [
-    "flate",
-    "gzip",
-    "zlib",
-  ]
-  pruneopts = "UT"
-  revision = "30be6041bed523c18e269a700ebd9c2ea9328574"
-  version = "v1.4.1"
-
-[[projects]]
-  digest = "1:2d643962fac133904694fffa959bc3c5dcfdcee38c6f5ffdd99a3c93eb9c835c"
-  name = "github.com/klauspost/cpuid"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "e7e905edc00ea8827e58662220139109efea09db"
-  version = "v1.2.0"
-
-[[projects]]
   digest = "1:0981502f9816113c9c8c4ac301583841855c8cf4da8c72f696b3ebedf6d0e4e5"
   name = "github.com/mattn/go-isatty"
   packages = ["."]
@@ -99,6 +79,17 @@
   version = "1.0.1"
 
 [[projects]]
+  digest = "1:3e39bafd6c2f4bf3c76c3bfd16a2e09e016510ad5db90dc02b88e2f565d6d595"
+  name = "github.com/spf13/afero"
+  packages = [
+    ".",
+    "mem",
+  ]
+  pruneopts = "UT"
+  revision = "f4711e4db9e9a1d3887343acb72b2bbfc2f686f5"
+  version = "v1.2.1"
+
+[[projects]]
   digest = "1:4887e9e89c80299aa520d718239809fdd2a47a9aa394909b169959bfbc424ddf"
   name = "github.com/ugorji/go"
   packages = ["codec"]
@@ -107,20 +98,27 @@
   version = "v1.1.2"
 
 [[projects]]
-  digest = "1:c468422f334a6b46a19448ad59aaffdfc0a36b08fdcc1c749a0b29b6453d7e59"
-  name = "github.com/valyala/bytebufferpool"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
-  version = "v1.0.0"
-
-[[projects]]
   branch = "master"
   digest = "1:aba2486bbebaadd1f62bde3c363ddbd984efade895833d86ed069f586fd9e899"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
   revision = "aca44879d5644da7c5b8ec6a1115e9b6ea6c40d9"
+
+[[projects]]
+  digest = "1:8029e9743749d4be5bc9f7d42ea1659471767860f0cdc34d37c3111bd308a295"
+  name = "golang.org/x/text"
+  packages = [
+    "internal/gen",
+    "internal/triegen",
+    "internal/ucd",
+    "transform",
+    "unicode/cldr",
+    "unicode/norm",
+  ]
+  pruneopts = "UT"
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
 
 [[projects]]
   digest = "1:cbc72c4c4886a918d6ab4b95e347ffe259846260f99ebdd8a198c2331cf2b2e9"
@@ -145,6 +143,7 @@
     "github.com/gin-contrib/cors",
     "github.com/gin-gonic/gin",
     "github.com/joho/godotenv",
+    "github.com/spf13/afero",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
