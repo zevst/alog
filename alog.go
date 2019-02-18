@@ -40,9 +40,8 @@ type Log struct {
 }
 
 type Config struct {
-	LogFileLine bool
-	TimeFormat  string
-	Loggers     LoggerMap
+	TimeFormat string
+	Loggers    LoggerMap
 }
 
 type LoggerMap map[uint]*Logger
@@ -172,14 +171,23 @@ func (a *Log) Warning(msg string) *Log {
 	return a
 }
 
-// Method for recording errors with stack
-func (a *Log) Error(err error, printDebug bool) *Log {
+// Method for recording errors without stack
+func (a *Log) Error(err error) *Log {
 	if err != nil && a.config.Loggers[LoggerErr] != nil {
-		if printDebug {
-			a.config.Loggers[LoggerErr].Channel <- fmt.Sprintf("%s\n%s\n---\n\n", a.prepareLog(time.Now(), err.Error()), string(debug.Stack()))
-		} else {
-			a.config.Loggers[LoggerErr].Channel <- a.prepareLog(time.Now(), err.Error())
-		}
+		a.config.Loggers[LoggerErr].Channel <- a.prepareLog(time.Now(), err.Error())
+	} else if err != nil {
+		printNotConfiguredMessage(LoggerErr)
+		log.Println(err)
+	} else {
+		printNotConfiguredMessage(LoggerErr)
+	}
+	return a
+}
+
+// Method for recording errors with stack
+func (a *Log) ErrorDebug(err error) *Log {
+	if err != nil && a.config.Loggers[LoggerErr] != nil {
+		a.config.Loggers[LoggerErr].Channel <- fmt.Sprintf("%s\n%s\n---\n\n", a.prepareLogWithStack(time.Now(), err.Error()), string(debug.Stack()))
 	} else if err != nil {
 		printNotConfiguredMessage(LoggerErr)
 		log.Println(err)
@@ -196,14 +204,7 @@ func (a *Log) getTimeFormat() string {
 	return time.RFC3339Nano
 }
 
-func (a *Log) prepareLog(time time.Time, msg string) string {
-	if !a.config.LogFileLine {
-		return fmt.Sprintf(
-			"%s;%s\n",
-			time.Format(a.getTimeFormat()),
-			msg,
-		)
-	}
+func (a *Log) prepareLogWithStack(time time.Time, msg string) string {
 	if _, fileName, fileLine, ok := runtime.Caller(2); ok {
 		return fmt.Sprintf(
 			"%s;%s:%d;%s\n",
@@ -215,6 +216,14 @@ func (a *Log) prepareLog(time time.Time, msg string) string {
 	}
 	return fmt.Sprintf(
 		"%s;;%s\n",
+		time.Format(a.getTimeFormat()),
+		msg,
+	)
+}
+
+func (a *Log) prepareLog(time time.Time, msg string) string {
+	return fmt.Sprintf(
+		"%s;%s\n",
 		time.Format(a.getTimeFormat()),
 		msg,
 	)

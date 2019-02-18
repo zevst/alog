@@ -46,7 +46,6 @@ func loggerProvider() *Logger {
 
 func configProvider() *Config {
 	return &Config{
-		LogFileLine: false,
 		Loggers: LoggerMap{
 			LoggerInfo: loggerProvider(),
 		},
@@ -99,14 +98,12 @@ func TestLog_prepareLog(t *testing.T) {
 		msg  string
 	}
 
-	_, fileName, fileLine, _ := runtime.Caller(1)
 	now := time.Now()
 	msg := "Hello, ALog!"
 
 	configFirst := configProvider()
 	configFirst.TimeFormat = time.RFC3339
 	configSecond := configProvider()
-	configSecond.LogFileLine = true
 	loggerErr := loggerProvider()
 	loggerErr.addStrategy(GetFileStrategy(""))
 	configSecond.Loggers = LoggerMap{
@@ -143,10 +140,8 @@ func TestLog_prepareLog(t *testing.T) {
 				msg:  msg,
 			},
 			want: fmt.Sprintf(
-				"%s;%s:%d;%s\n",
+				"%s;%s\n",
 				now.Format(time.RFC3339Nano),
-				fileName,
-				fileLine,
 				msg,
 			),
 		},
@@ -277,8 +272,116 @@ func TestLog_Error(t *testing.T) {
 			a := &Log{
 				config: tt.fields.config,
 			}
-			if got := a.Error(tt.args.err, tt.args.printDebug); !reflect.DeepEqual(got, tt.want) {
+			if got := a.Error(tt.args.err); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Log.Error() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLog_ErrorDebug(t *testing.T) {
+	type fields struct {
+		config *Config
+	}
+	type args struct {
+		err error
+	}
+	config := configProvider()
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *Log
+	}{
+		{
+			fields: fields{
+				config: config,
+			},
+			want: &Log{
+				config: config,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &Log{
+				config: tt.fields.config,
+			}
+			if got := a.ErrorDebug(tt.args.err); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Log.ErrorDebug() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLog_prepareLogWithStack(t *testing.T) {
+	type fields struct {
+		config *Config
+	}
+	type args struct {
+		time time.Time
+		msg  string
+	}
+	_, fileName, fileLine, _ := runtime.Caller(1)
+	now := time.Now()
+	msg := "Hello, ALog!"
+
+	configFirst := configProvider()
+	configFirst.TimeFormat = time.RFC3339
+	configSecond := configProvider()
+	loggerErr := loggerProvider()
+	loggerErr.addStrategy(GetFileStrategy(""))
+	configSecond.Loggers = LoggerMap{
+		LoggerInfo: loggerProvider(),
+		LoggerErr:  loggerErr,
+	}
+
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		{
+			fields: fields{
+				config: configFirst,
+			},
+			args: args{
+				time: now,
+				msg:  msg,
+			},
+			want: fmt.Sprintf(
+				"%s;%s:%d;%s\n",
+				now.Format(time.RFC3339),
+				fileName,
+				fileLine,
+				msg,
+			),
+		},
+		{
+			fields: fields{
+				config: configSecond,
+			},
+			args: args{
+				time: now,
+				msg:  msg,
+			},
+			want: fmt.Sprintf(
+				"%s;%s:%d;%s\n",
+				now.Format(time.RFC3339Nano),
+				fileName,
+				fileLine,
+				msg,
+			),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &Log{
+				config: tt.fields.config,
+			}
+			if got := a.prepareLogWithStack(tt.args.time, tt.args.msg); got != tt.want {
+				t.Errorf("Log.prepareLogWithStack() = %v, want %v", got, tt.want)
 			}
 		})
 	}
