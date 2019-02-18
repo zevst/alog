@@ -177,11 +177,10 @@ func (a *Log) Warning(msg string) *Log {
 
 // Method for recording errors without stack
 func (a *Log) Error(err error) *Log {
-	if err != nil && a.config.Loggers[LoggerErr] != nil {
-		a.config.Loggers[LoggerErr].Channel <- a.prepareLog(time.Now(), err.Error())
-	} else if err != nil {
-		printNotConfiguredMessage(LoggerErr)
-		log.Println(err)
+	if a.config.Loggers[LoggerErr] != nil {
+		if err != nil {
+			a.config.Loggers[LoggerErr].Channel <- a.prepareLog(time.Now(), err.Error())
+		}
 	} else {
 		printNotConfiguredMessage(LoggerErr)
 	}
@@ -190,11 +189,10 @@ func (a *Log) Error(err error) *Log {
 
 // Method for recording errors with stack
 func (a *Log) ErrorDebug(err error) *Log {
-	if err != nil && a.config.Loggers[LoggerErr] != nil {
-		a.config.Loggers[LoggerErr].Channel <- fmt.Sprintf("%s\n%s\n---\n\n", a.prepareLogWithStack(time.Now(), err.Error()), string(debug.Stack()))
-	} else if err != nil {
-		printNotConfiguredMessage(LoggerErr)
-		log.Println(err)
+	if a.config.Loggers[LoggerErr] != nil {
+		if err != nil {
+			a.config.Loggers[LoggerErr].Channel <- fmt.Sprintf("%s\n%s\n---\n\n", a.prepareLogWithStack(time.Now(), err.Error()), string(debug.Stack()))
+		}
 	} else {
 		printNotConfiguredMessage(LoggerErr)
 	}
