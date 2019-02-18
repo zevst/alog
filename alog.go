@@ -148,6 +148,10 @@ func (a *Log) Info(msg string) *Log {
 }
 
 func printNotConfiguredMessage(code uint) {
+	if _, fileName, fileLine, ok := runtime.Caller(2); ok {
+		log.Println(fmt.Sprintf("%s:%d Logger %s not configured", fileName, fileLine, LoggerName(code)))
+		return
+	}
 	log.Println(fmt.Sprintf("Logger %s not configured", LoggerName(code)))
 }
 
