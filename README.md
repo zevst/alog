@@ -1,4 +1,6 @@
-**ALog - Fast and asynchronous logger.**
+# ALog - Fast and asynchronous logger.
+
+[![ALog](https://circleci.com/gh/mylockerteam/alog.svg?style=svg)](https://circleci.com/gh/mylockerteam/alog)
 
 [Install](#install)
 
