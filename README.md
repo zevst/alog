@@ -1,4 +1,4 @@
-# ALog - Fast and asynchronous logger.
+# ALog - Fast and asynchronous logger
 
 [![ALog](https://circleci.com/gh/mylockerteam/alog.svg?style=svg)](https://circleci.com/gh/mylockerteam/alog)
 [![GitHub tag](https://img.shields.io/github/tag/mylockerteam/alog.svg)](https://github.com/mylockerteam/alog/releases)
@@ -11,12 +11,10 @@
 [![GoDoc](https://godoc.org/github.com/mylockerteam/alog?status.svg)](https://godoc.org/github.com/mylockerteam/alog)
 [![Sourcegraph](https://sourcegraph.com/github.com/mylockerteam/alog/-/badge.svg)](https://sourcegraph.com/github.com/mylockerteam/alog?badge)
 
-[Install](#install)
-
-[Configure](https://github.com/mylockerteam/alog/wiki#configure)
-
-# Install
-```
+## Install
+```bash
 go get -u github.com/mylockerteam/alog
 
 ```
+
+[Configure](https://github.com/mylockerteam/alog/wiki#configure)
