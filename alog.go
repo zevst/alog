@@ -21,6 +21,13 @@ import (
 )
 
 const (
+	messageFormatDefault      = "%s;%s\n"
+	messageFormatErrorDebug   = "%s\n%s\n---\n\n"
+	messageFormatWithStack    = "%s;%s:%d;%s\n"
+	messageFormatWithoutStack = "%s;;%s\n"
+)
+
+const (
 	ErrCanNotCreateDirectory = "can't create directory"
 )
 
@@ -85,7 +92,7 @@ func (l *Logger) Write(p []byte) (n int, err error) {
 	return 0, errors.New("the channel was closed for recording")
 }
 
-// console write strategy
+// GetDefaultStrategy console write strategy
 func GetDefaultStrategy() io.Writer {
 	return &DefaultStrategy{}
 }
@@ -95,7 +102,7 @@ func (s *DefaultStrategy) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// file write strategy
+// GetFileStrategy file write strategy
 func GetFileStrategy(filePath string) io.Writer {
 	if addDirectory(filePath) == nil {
 		file, err := openFile(filePath)
@@ -116,7 +123,7 @@ func (s *FileStrategy) Write(p []byte) (n int, err error) {
 	return 0, errors.New("file not defined")
 }
 
-// creates an instance of the logger
+// Create creates an instance of the logger
 func Create(config *Config) *Log {
 	for _, logger := range config.Loggers {
 		go func(logger *Logger) {
@@ -134,7 +141,15 @@ func Create(config *Config) *Log {
 	}
 }
 
-// Method for recording informational messages
+func printNotConfiguredMessage(code uint) {
+	if _, fileName, fileLine, ok := runtime.Caller(2); ok {
+		log.Println(fmt.Sprintf("%s:%d Logger %s not configured", fileName, fileLine, LoggerName(code)))
+		return
+	}
+	log.Println(fmt.Sprintf("Logger %s not configured", LoggerName(code)))
+}
+
+// Info method for recording informational messages
 func (a *Log) Info(msg string) *Log {
 
 	if logger := a.config.Loggers[LoggerInfo]; logger != nil {
@@ -145,15 +160,7 @@ func (a *Log) Info(msg string) *Log {
 	return a
 }
 
-func printNotConfiguredMessage(code uint) {
-	if _, fileName, fileLine, ok := runtime.Caller(2); ok {
-		log.Println(fmt.Sprintf("%s:%d Logger %s not configured", fileName, fileLine, LoggerName(code)))
-		return
-	}
-	log.Println(fmt.Sprintf("Logger %s not configured", LoggerName(code)))
-}
-
-// Method of recording formatted informational messages
+// Infof method of recording formatted informational messages
 func (a *Log) Infof(format string, p ...interface{}) *Log {
 	if logger := a.config.Loggers[LoggerInfo]; logger != nil {
 		logger.Channel <- a.prepareLog(time.Now(), fmt.Sprintf(format, p...))
@@ -163,7 +170,7 @@ func (a *Log) Infof(format string, p ...interface{}) *Log {
 	return a
 }
 
-// Method for recording warning messages
+// Warning method for recording warning messages
 func (a *Log) Warning(msg string) *Log {
 	if a.config.Loggers[LoggerWrn] != nil {
 		a.config.Loggers[LoggerWrn].Channel <- a.prepareLog(time.Now(), msg)
@@ -185,11 +192,12 @@ func (a *Log) Error(err error) *Log {
 	return a
 }
 
-// Method for recording errors with stack
+// ErrorDebug method for recording errors with stack
 func (a *Log) ErrorDebug(err error) *Log {
 	if a.config.Loggers[LoggerErr] != nil {
 		if err != nil {
-			a.config.Loggers[LoggerErr].Channel <- fmt.Sprintf("%s\n%s\n---\n\n", a.prepareLogWithStack(time.Now(), err.Error()), string(debug.Stack()))
+			msg := fmt.Sprintf(messageFormatErrorDebug, a.prepareLogWithStack(time.Now(), err.Error()), string(debug.Stack()))
+			a.config.Loggers[LoggerErr].Channel <- msg
 		}
 	} else {
 		printNotConfiguredMessage(LoggerErr)
@@ -207,7 +215,7 @@ func (a *Log) getTimeFormat() string {
 func (a *Log) prepareLogWithStack(time time.Time, msg string) string {
 	if _, fileName, fileLine, ok := runtime.Caller(2); ok {
 		return fmt.Sprintf(
-			"%s;%s:%d;%s\n",
+			messageFormatWithStack,
 			time.Format(a.getTimeFormat()),
 			fileName,
 			fileLine,
@@ -215,7 +223,7 @@ func (a *Log) prepareLogWithStack(time time.Time, msg string) string {
 		)
 	}
 	return fmt.Sprintf(
-		"%s;;%s\n",
+		messageFormatWithoutStack,
 		time.Format(a.getTimeFormat()),
 		msg,
 	)
@@ -223,7 +231,7 @@ func (a *Log) prepareLogWithStack(time time.Time, msg string) string {
 
 func (a *Log) prepareLog(time time.Time, msg string) string {
 	return fmt.Sprintf(
-		"%s;%s\n",
+		messageFormatDefault,
 		time.Format(a.getTimeFormat()),
 		msg,
 	)
