@@ -8,6 +8,7 @@ jobs:
       - checkout
       - run: |
           go get -v -t -d ./...
+          go list ./... | xargs -n 1 golint
           go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
       - run:
           name: Build Success
