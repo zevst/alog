@@ -120,13 +120,10 @@ func (s *FileStrategy) Write(p []byte) (n int, err error) {
 func Create(config *Config) *Log {
 	for _, logger := range config.Loggers {
 		go func(logger *Logger) {
-			for {
-				select {
-				case msg := <-logger.Channel:
-					for _, strategy := range logger.Strategies {
-						if n, err := strategy.Write([]byte(msg)); err != nil {
-							log.Println(fmt.Sprintf("%d characters have been written. %s", n, err.Error()))
-						}
+			for msg := range logger.Channel {
+				for _, strategy := range logger.Strategies {
+					if n, err := strategy.Write([]byte(msg)); err != nil {
+						log.Println(fmt.Sprintf("%d characters have been written. %s", n, err.Error()))
 					}
 				}
 			}
@@ -139,8 +136,9 @@ func Create(config *Config) *Log {
 
 // Method for recording informational messages
 func (a *Log) Info(msg string) *Log {
-	if a.config.Loggers[LoggerInfo] != nil {
-		a.config.Loggers[LoggerInfo].Channel <- a.prepareLog(time.Now(), msg)
+
+	if logger := a.config.Loggers[LoggerInfo]; logger != nil {
+		logger.Channel <- a.prepareLog(time.Now(), msg)
 	} else {
 		printNotConfiguredMessage(LoggerInfo)
 	}
@@ -157,8 +155,8 @@ func printNotConfiguredMessage(code uint) {
 
 // Method of recording formatted informational messages
 func (a *Log) Infof(format string, p ...interface{}) *Log {
-	if a.config.Loggers[LoggerInfo] != nil {
-		a.config.Loggers[LoggerInfo].Channel <- a.prepareLog(time.Now(), fmt.Sprintf(format, p...))
+	if logger := a.config.Loggers[LoggerInfo]; logger != nil {
+		logger.Channel <- a.prepareLog(time.Now(), fmt.Sprintf(format, p...))
 	} else {
 		printNotConfiguredMessage(LoggerInfo)
 	}
