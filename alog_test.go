@@ -247,8 +247,7 @@ func TestLog_Error(t *testing.T) {
 		config *Config
 	}
 	type args struct {
-		err        error
-		printDebug bool
+		err error
 	}
 	config := configProvider()
 
