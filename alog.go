@@ -126,18 +126,24 @@ func (s *FileStrategy) Write(p []byte) (n int, err error) {
 // Create creates an instance of the logger
 func Create(config *Config) *Log {
 	for _, logger := range config.Loggers {
-		go func(logger *Logger) {
-			for msg := range logger.Channel {
-				for _, strategy := range logger.Strategies {
-					if n, err := strategy.Write([]byte(msg)); err != nil {
-						log.Println(fmt.Sprintf("%d characters have been written. %s", n, err.Error()))
-					}
-				}
-			}
-		}(logger)
+		go logger.reader()
 	}
 	return &Log{
 		config: config,
+	}
+}
+
+func (l *Logger) reader() {
+	for msg := range l.Channel {
+		l.writeMessage(msg)
+	}
+}
+
+func (l *Logger) writeMessage(msg string) {
+	for _, strategy := range l.Strategies {
+		if n, err := strategy.Write([]byte(msg)); err != nil {
+			log.Println(fmt.Sprintf("%d characters have been written. %s", n, err.Error()))
+		}
 	}
 }
 
