@@ -3,6 +3,7 @@
 [![ALog](https://circleci.com/gh/mylockerteam/alog.svg?style=svg)](https://circleci.com/gh/mylockerteam/alog)
 [![GitHub tag](https://img.shields.io/github/tag/mylockerteam/alog.svg)](https://github.com/mylockerteam/alog/releases)
 [![codecov](https://codecov.io/gh/mylockerteam/alog/branch/master/graph/badge.svg)](https://codecov.io/gh/mylockerteam/alog)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/mylockerteam/alog/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/mylockerteam/alog/?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9ee32d7445124b2d95ba4b1702ceb4a0)](https://www.codacy.com/app/Apologiz/alog)
 [![Maintainability](https://api.codeclimate.com/v1/badges/11ddac7877158db28363/maintainability)](https://codeclimate.com/github/mylockerteam/alog/maintainability)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mylockerteam/alog)](https://goreportcard.com/report/github.com/mylockerteam/alog)

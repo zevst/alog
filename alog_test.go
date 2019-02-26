@@ -28,7 +28,7 @@ func init() {
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-func RandStringRunes(n int) string {
+func randStringRunes(n int) string {
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
@@ -40,7 +40,7 @@ func loggerProvider() *Logger {
 	return &Logger{
 		Channel: make(chan string, 100),
 		Strategies: []io.Writer{
-			GetFileStrategy(fmt.Sprintf("/tmp/%s/", RandStringRunes(10))),
+			GetFileStrategy(fmt.Sprintf("/tmp/%s/", randStringRunes(10))),
 			GetDefaultStrategy(),
 		},
 	}
@@ -77,7 +77,7 @@ func Test_createDirectoryIfNotExist(t *testing.T) {
 		},
 		{
 			args: args{
-				dirPath: fmt.Sprintf("/tmp/%s/", RandStringRunes(10)),
+				dirPath: fmt.Sprintf("/tmp/%s/", randStringRunes(10)),
 			},
 			wantErr: false,
 		},
@@ -92,9 +92,6 @@ func Test_createDirectoryIfNotExist(t *testing.T) {
 }
 
 func TestLog_prepareLog(t *testing.T) {
-	type fields struct {
-		config *Config
-	}
 	type args struct {
 		time time.Time
 		msg  string
@@ -114,12 +111,12 @@ func TestLog_prepareLog(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		fields fields
+		fields Log
 		args   args
 		want   string
 	}{
 		{
-			fields: fields{
+			fields: Log{
 				config: configFirst,
 			},
 			args: args{
@@ -133,7 +130,7 @@ func TestLog_prepareLog(t *testing.T) {
 			),
 		},
 		{
-			fields: fields{
+			fields: Log{
 				config: configSecond,
 			},
 			args: args{
@@ -172,7 +169,7 @@ func Test_openFile(t *testing.T) {
 	}{
 		{
 			args: args{
-				filePath: fmt.Sprintf("/tmp/%s/", RandStringRunes(10)),
+				filePath: fmt.Sprintf("/tmp/%s/", randStringRunes(10)),
 			},
 			wantErr: false,
 		},
@@ -227,7 +224,7 @@ func Test_addDirectory(t *testing.T) {
 		},
 		{
 			args: args{
-				filePath: fmt.Sprintf("/tmp/%s/", RandStringRunes(10)),
+				filePath: fmt.Sprintf("/tmp/%s/", randStringRunes(10)),
 			},
 			wantErr: false,
 		},
@@ -244,9 +241,6 @@ func Test_addDirectory(t *testing.T) {
 }
 
 func TestLog_Error(t *testing.T) {
-	type fields struct {
-		config *Config
-	}
 	type args struct {
 		err error
 	}
@@ -254,12 +248,12 @@ func TestLog_Error(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		fields fields
+		fields Log
 		args   args
 		want   *Log
 	}{
 		{
-			fields: fields{
+			fields: Log{
 				config: config,
 			},
 			want: &Log{
@@ -280,21 +274,18 @@ func TestLog_Error(t *testing.T) {
 }
 
 func TestLog_ErrorDebug(t *testing.T) {
-	type fields struct {
-		config *Config
-	}
 	type args struct {
 		err error
 	}
 	config := configProvider()
 	tests := []struct {
 		name   string
-		fields fields
+		fields Log
 		args   args
 		want   *Log
 	}{
 		{
-			fields: fields{
+			fields: Log{
 				config: config,
 			},
 			want: &Log{
@@ -315,16 +306,12 @@ func TestLog_ErrorDebug(t *testing.T) {
 }
 
 func TestLog_prepareLogWithStack(t *testing.T) {
-	type fields struct {
-		config *Config
-	}
 	type args struct {
 		time time.Time
 		msg  string
 	}
 	_, fileName, fileLine, _ := runtime.Caller(1)
 	now := time.Now()
-	msg := "Hello, ALog!"
 
 	configFirst := configProvider()
 	configFirst.TimeFormat = time.RFC3339
@@ -338,40 +325,40 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		fields fields
+		fields Log
 		args   args
 		want   string
 	}{
 		{
-			fields: fields{
+			fields: Log{
 				config: configFirst,
 			},
 			args: args{
 				time: now,
-				msg:  msg,
+				msg:  testMsg,
 			},
 			want: fmt.Sprintf(
 				"%s;%s:%d;%s\n",
 				now.Format(time.RFC3339),
 				fileName,
 				fileLine,
-				msg,
+				testMsg,
 			),
 		},
 		{
-			fields: fields{
+			fields: Log{
 				config: configSecond,
 			},
 			args: args{
 				time: now,
-				msg:  msg,
+				msg:  testMsg,
 			},
 			want: fmt.Sprintf(
 				"%s;%s:%d;%s\n",
 				now.Format(time.RFC3339Nano),
 				fileName,
 				fileLine,
-				msg,
+				testMsg,
 			),
 		},
 	}
@@ -388,21 +375,17 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 }
 
 func TestLogger_writeMessage(t *testing.T) {
-	type fields struct {
-		Channel    chan string
-		Strategies []io.Writer
-	}
 	type args struct {
 		msg string
 	}
 	logger := loggerProvider()
 	tests := []struct {
 		name   string
-		fields fields
+		fields Logger
 		args   args
 	}{
 		{
-			fields: fields{
+			fields: Logger{
 				logger.Channel,
 				logger.Strategies,
 			},
@@ -411,7 +394,7 @@ func TestLogger_writeMessage(t *testing.T) {
 			},
 		},
 		{
-			fields: fields{
+			fields: Logger{
 				Channel: make(chan string),
 				Strategies: []io.Writer{
 					GetFileStrategy(""),
@@ -434,18 +417,14 @@ func TestLogger_writeMessage(t *testing.T) {
 }
 
 func TestLogger_reader(t *testing.T) {
-	type fields struct {
-		Channel    chan string
-		Strategies []io.Writer
-	}
 	logger := loggerProvider()
 	logger.Channel <- testMsg
 	tests := []struct {
 		name   string
-		fields fields
+		fields Logger
 	}{
 		{
-			fields: fields{
+			fields: Logger{
 				logger.Channel,
 				logger.Strategies,
 			},
@@ -463,10 +442,6 @@ func TestLogger_reader(t *testing.T) {
 }
 
 func Test_io_Write(t *testing.T) {
-	type fields struct {
-		Channel    chan string
-		Strategies []io.Writer
-	}
 	type args struct {
 		p []byte
 	}
@@ -474,13 +449,13 @@ func Test_io_Write(t *testing.T) {
 	close(logger.Channel)
 	tests := []struct {
 		name    string
-		fields  fields
+		fields  Logger
 		args    args
 		wantN   int
 		wantErr bool
 	}{
 		{
-			fields: fields{
+			fields: Logger{
 				make(chan string, 1),
 				logger.Strategies,
 			},
@@ -491,7 +466,7 @@ func Test_io_Write(t *testing.T) {
 			wantN:   12,
 		},
 		{
-			fields: fields{
+			fields: Logger{
 				logger.Channel,
 				logger.Strategies,
 			},
