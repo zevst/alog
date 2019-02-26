@@ -85,11 +85,20 @@ func LoggerName(code uint) string {
 
 // Writer interface for informational messages
 func (l *Logger) Write(p []byte) (n int, err error) {
-	if l != nil {
-		l.Channel <- string(p)
-		return len(p), nil
+	if l == nil || isClosedCh(l.Channel) {
+		return 0, errors.New("the channel was closed for recording")
 	}
-	return 0, errors.New("the channel was closed for recording")
+	l.Channel <- string(p)
+	return len(p), nil
+}
+
+func isClosedCh(ch <-chan string) bool {
+	select {
+	case <-ch:
+		return true
+	default:
+		return false
+	}
 }
 
 // GetDefaultStrategy console write strategy
