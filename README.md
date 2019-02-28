@@ -21,6 +21,5 @@ go get -u github.com/mylockerteam/alog
 
 [Configure](https://github.com/mylockerteam/alog/wiki#configure)
 
-
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmylockerteam%2Falog.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmylockerteam%2Falog?ref=badge_large)
