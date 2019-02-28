@@ -244,8 +244,12 @@ func TestLog_Error(t *testing.T) {
 	type args struct {
 		err error
 	}
-	config := configProvider()
-
+	info := configProvider()
+	err := &Config{
+		Loggers: LoggerMap{
+			LoggerErr: loggerProvider(),
+		},
+	}
 	tests := []struct {
 		name   string
 		fields Log
@@ -254,10 +258,29 @@ func TestLog_Error(t *testing.T) {
 	}{
 		{
 			fields: Log{
-				config: config,
+				config: info,
 			},
 			want: &Log{
-				config: config,
+				config: info,
+			},
+		},
+		{
+			fields: Log{
+				config: err,
+			},
+			want: &Log{
+				config: err,
+			},
+		},
+		{
+			fields: Log{
+				config: err,
+			},
+			args: args{
+				err: fmt.Errorf("error for test"),
+			},
+			want: &Log{
+				config: err,
 			},
 		},
 	}
@@ -277,7 +300,12 @@ func TestLog_ErrorDebug(t *testing.T) {
 	type args struct {
 		err error
 	}
-	config := configProvider()
+	info := configProvider()
+	err := &Config{
+		Loggers: LoggerMap{
+			LoggerErr: loggerProvider(),
+		},
+	}
 	tests := []struct {
 		name   string
 		fields Log
@@ -286,10 +314,29 @@ func TestLog_ErrorDebug(t *testing.T) {
 	}{
 		{
 			fields: Log{
-				config: config,
+				config: info,
 			},
 			want: &Log{
-				config: config,
+				config: info,
+			},
+		},
+		{
+			fields: Log{
+				config: err,
+			},
+			want: &Log{
+				config: err,
+			},
+		},
+		{
+			fields: Log{
+				config: err,
+			},
+			args: args{
+				err: fmt.Errorf("error for test"),
+			},
+			want: &Log{
+				config: err,
 			},
 		},
 	}
@@ -490,6 +537,170 @@ func Test_io_Write(t *testing.T) {
 			}
 			if gotN != tt.wantN {
 				t.Errorf("Logger.Write() = %v, want %v", gotN, tt.wantN)
+			}
+		})
+	}
+}
+
+func TestCreate(t *testing.T) {
+	type args struct {
+		config *Config
+	}
+	config := configProvider()
+	tests := []struct {
+		name string
+		args args
+		want *Log
+	}{
+		{
+			args: args{
+				config: config,
+			},
+			want: &Log{
+				config: config,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Create(tt.args.config); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Create() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLog_Info(t *testing.T) {
+	type args struct {
+		msg string
+	}
+	info := configProvider()
+	wrn := &Config{
+		Loggers: LoggerMap{
+			LoggerWrn: loggerProvider(),
+		},
+	}
+	tests := []struct {
+		name   string
+		fields Log
+		args   args
+		want   *Log
+	}{
+		{
+			fields: Log{
+				config: info,
+			},
+			want: &Log{
+				config: info,
+			},
+		},
+		{
+			fields: Log{
+				config: wrn,
+			},
+			want: &Log{
+				config: wrn,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &Log{
+				config: tt.fields.config,
+			}
+			if got := a.Info(tt.args.msg); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Log.Info() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLog_Infof(t *testing.T) {
+	type args struct {
+		format string
+		p      []interface{}
+	}
+	info := configProvider()
+	wrn := &Config{
+		Loggers: LoggerMap{
+			LoggerWrn: loggerProvider(),
+		},
+	}
+	tests := []struct {
+		name   string
+		fields Log
+		args   args
+		want   *Log
+	}{
+		{
+			fields: Log{
+				config: info,
+			},
+			want: &Log{
+				config: info,
+			},
+		},
+		{
+			fields: Log{
+				config: wrn,
+			},
+			want: &Log{
+				config: wrn,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &Log{
+				config: tt.fields.config,
+			}
+			if got := a.Infof(tt.args.format, tt.args.p...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Log.Infof() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLog_Warning(t *testing.T) {
+	type args struct {
+		msg string
+	}
+	info := configProvider()
+	wrn := &Config{
+		Loggers: LoggerMap{
+			LoggerWrn: loggerProvider(),
+		},
+	}
+	tests := []struct {
+		name   string
+		fields Log
+		args   args
+		want   *Log
+	}{
+		{
+			fields: Log{
+				config: info,
+			},
+			want: &Log{
+				config: info,
+			},
+		},
+		{
+			fields: Log{
+				config: wrn,
+			},
+			want: &Log{
+				config: wrn,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &Log{
+				config: tt.fields.config,
+			}
+			if got := a.Warning(tt.args.msg); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Log.Warning() = %v, want %v", got, tt.want)
 			}
 		})
 	}
