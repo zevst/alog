@@ -12,6 +12,7 @@
 [![GoDoc](https://godoc.org/github.com/mylockerteam/alog?status.svg)](https://godoc.org/github.com/mylockerteam/alog)
 [![Sourcegraph](https://sourcegraph.com/github.com/mylockerteam/alog/-/badge.svg)](https://sourcegraph.com/github.com/mylockerteam/alog?badge)
 [![HitCount](http://hits.dwyl.io/mylockerteam/alog.svg)](http://hits.dwyl.io/mylockerteam/alog)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmylockerteam%2Falog.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmylockerteam%2Falog?ref=badge_shield)
 
 ## Install
 ```bash
@@ -19,3 +20,6 @@ go get -u github.com/mylockerteam/alog
 ```
 
 [Configure](https://github.com/mylockerteam/alog/wiki#configure)
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmylockerteam%2Falog.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmylockerteam%2Falog?ref=badge_large)
