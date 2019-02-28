@@ -7,6 +7,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9ee32d7445124b2d95ba4b1702ceb4a0)](https://www.codacy.com/app/Apologiz/alog)
 [![Maintainability](https://api.codeclimate.com/v1/badges/11ddac7877158db28363/maintainability)](https://codeclimate.com/github/mylockerteam/alog/maintainability)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mylockerteam/alog)](https://goreportcard.com/report/github.com/mylockerteam/alog)
+[![GolangCI](https://golangci.com/badges/github.com/mylockerteam/alog.svg)](https://golangci.com)
 [![codebeat badge](https://codebeat.co/badges/d3b5ad0f-64d8-443e-bd12-36eccde72479)](https://codebeat.co/projects/github-com-mylockerteam-alog-master)
 [![License](https://img.shields.io/github/license/mylockerteam/alog.svg)](https://github.com/mylockerteam/alog/blob/master/LICENSE)
 [![GoDoc](https://godoc.org/github.com/mylockerteam/alog?status.svg)](https://godoc.org/github.com/mylockerteam/alog)
