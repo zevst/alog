@@ -28,12 +28,15 @@ const (
 )
 
 const (
-	ErrCanNotCreateDirectory = "can't create directory"
+	errCanNotCreateDirectory = "can't create directory"
 )
 
 const (
+	// LoggerInfo logger type
 	LoggerInfo uint = iota
+	// LoggerWrn logger type
 	LoggerWrn
+	// LoggerErr logger type
 	LoggerErr
 )
 
@@ -42,30 +45,36 @@ const (
 	filePermission = 0755
 )
 
-type Log struct {
-	config *Config
-}
+var fs = afero.NewOsFs()
 
-type Config struct {
-	TimeFormat string
-	Loggers    LoggerMap
-}
-
-type LoggerMap map[uint]*Logger
-
+// Logger logger structure which includes a channel and a slice strategies
 type Logger struct {
 	Channel    chan string
 	Strategies []io.Writer
 }
 
+// LoggerMap mapping for type:logger
+type LoggerMap map[uint]*Logger
+
+// Config contains settings and registered loggers
+type Config struct {
+	Loggers    LoggerMap
+	TimeFormat string
+}
+
+// Log logger himself
+type Log struct {
+	config *Config
+}
+
+// DefaultStrategy logging strategy in the console
 type DefaultStrategy struct {
 }
 
+//FileStrategy logging strategy in the file
 type FileStrategy struct {
 	file afero.File
 }
-
-var fs = afero.NewOsFs()
 
 var loggerName = map[uint]string{
 	LoggerInfo: "Info",
@@ -136,9 +145,7 @@ func Create(config *Config) *Log {
 	for _, logger := range config.Loggers {
 		go logger.reader()
 	}
-	return &Log{
-		config: config,
-	}
+	return &Log{config: config}
 }
 
 func (l *Logger) reader() {
@@ -269,7 +276,7 @@ func createDirectoryIfNotExist(dirPath string) error {
 
 func addDirectory(filePath string) error {
 	if filePath == "" {
-		return errors.New(ErrCanNotCreateDirectory)
+		return errors.New(errCanNotCreateDirectory)
 	}
 	dir, _ := filepath.Split(filePath)
 	return createDirectoryIfNotExist(dir)
