@@ -235,7 +235,7 @@ func casesAddDirectory() []testsAddDirectory {
 			wantErr: false,
 		},
 		{
-			name: ErrCanNotCreateDirectory,
+			name: errCanNotCreateDirectory,
 			args: argsAddDirectory{
 				filePath: "",
 			},
@@ -255,7 +255,7 @@ func Test_addDirectory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := addDirectory(tt.args.filePath); (err != nil) != tt.wantErr {
-				if err.Error() == ErrCanNotCreateDirectory && tt.name != ErrCanNotCreateDirectory {
+				if err.Error() == errCanNotCreateDirectory && tt.name != errCanNotCreateDirectory {
 					t.Errorf("addDirectory() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			}
@@ -622,13 +622,9 @@ func Test_io_Write(t *testing.T) {
 	}
 }
 
-type argsCreate struct {
-	config *Config
-}
-
 type testsCreate struct {
 	name string
-	args argsCreate
+	args Log
 	want *Log
 }
 
@@ -636,7 +632,7 @@ func casesCreate() []testsCreate {
 	config := configProvider()
 	return []testsCreate{
 		{
-			args: argsCreate{
+			args: Log{
 				config: config,
 			},
 			want: &Log{
