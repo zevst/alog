@@ -22,7 +22,6 @@ const testMsg = "Hello, ALog!"
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-
 	fs = afero.NewMemMapFs()
 }
 
@@ -54,34 +53,41 @@ func configProvider() *Config {
 	}
 }
 
-func Test_createDirectoryIfNotExist(t *testing.T) {
-	type args struct {
-		dirPath string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
+type argsCreateDirectoryIfNotExist struct {
+	dirPath string
+}
+
+type testCreateDirectoryIfNotExist struct {
+	name    string
+	args    argsCreateDirectoryIfNotExist
+	wantErr bool
+}
+
+func dataProviderCreateDirectoryIfNotExist() []testCreateDirectoryIfNotExist {
+	return []testCreateDirectoryIfNotExist{
 		{
-			args: args{
+			args: argsCreateDirectoryIfNotExist{
 				dirPath: "/",
 			},
 			wantErr: false,
 		},
 		{
-			args: args{
+			args: argsCreateDirectoryIfNotExist{
 				dirPath: "",
 			},
 			wantErr: false,
 		},
 		{
-			args: args{
+			args: argsCreateDirectoryIfNotExist{
 				dirPath: fmt.Sprintf("/tmp/%s/", randStringRunes(10)),
 			},
 			wantErr: false,
 		},
 	}
+}
+
+func Test_createDirectoryIfNotExist(t *testing.T) {
+	tests := dataProviderCreateDirectoryIfNotExist()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := createDirectoryIfNotExist(tt.args.dirPath); (err != nil) != tt.wantErr {
@@ -91,14 +97,20 @@ func Test_createDirectoryIfNotExist(t *testing.T) {
 	}
 }
 
-func TestLog_prepareLog(t *testing.T) {
-	type args struct {
-		time time.Time
-		msg  string
-	}
+type argsPrepareLog struct {
+	time time.Time
+	msg  string
+}
 
+type testPrepareLog struct {
+	name   string
+	fields Log
+	args   argsPrepareLog
+	want   string
+}
+
+func dataProviderPrepareLog() []testPrepareLog {
 	now := time.Now()
-
 	configFirst := configProvider()
 	configFirst.TimeFormat = time.RFC3339
 	configSecond := configProvider()
@@ -108,18 +120,12 @@ func TestLog_prepareLog(t *testing.T) {
 		LoggerInfo: loggerProvider(),
 		LoggerErr:  loggerErr,
 	}
-
-	tests := []struct {
-		name   string
-		fields Log
-		args   args
-		want   string
-	}{
+	tests := []testPrepareLog{
 		{
 			fields: Log{
 				config: configFirst,
 			},
-			args: args{
+			args: argsPrepareLog{
 				time: now,
 				msg:  testMsg,
 			},
@@ -133,7 +139,7 @@ func TestLog_prepareLog(t *testing.T) {
 			fields: Log{
 				config: configSecond,
 			},
-			args: args{
+			args: argsPrepareLog{
 				time: now,
 				msg:  testMsg,
 			},
@@ -144,7 +150,11 @@ func TestLog_prepareLog(t *testing.T) {
 			),
 		},
 	}
+	return tests
+}
 
+func TestLog_prepareLog(t *testing.T) {
+	tests := dataProviderPrepareLog()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &Log{
@@ -157,35 +167,43 @@ func TestLog_prepareLog(t *testing.T) {
 	}
 }
 
-func Test_openFile(t *testing.T) {
-	type args struct {
-		filePath string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    afero.File
-		wantErr bool
-	}{
+type argsOpenFile struct {
+	filePath string
+}
+
+type testsOpenFile struct {
+	name    string
+	args    argsOpenFile
+	want    afero.File
+	wantErr bool
+}
+
+func dataProviderOpenFile() []testsOpenFile {
+	tests := []testsOpenFile{
 		{
-			args: args{
+			args: argsOpenFile{
 				filePath: fmt.Sprintf("/tmp/%s/", randStringRunes(10)),
 			},
 			wantErr: false,
 		},
 		{
-			args: args{
+			args: argsOpenFile{
 				filePath: "/",
 			},
 			wantErr: false,
 		},
 		{
-			args: args{
+			args: argsOpenFile{
 				filePath: "",
 			},
 			wantErr: true,
 		},
 	}
+	return tests
+}
+
+func Test_openFile(t *testing.T) {
+	tests := dataProviderOpenFile()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := openFile(tt.args.filePath)
@@ -356,6 +374,7 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 	type args struct {
 		time time.Time
 		msg  string
+		skip int
 	}
 	_, fileName, fileLine, _ := runtime.Caller(1)
 	now := time.Now()
@@ -383,9 +402,10 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 			args: args{
 				time: now,
 				msg:  testMsg,
+				skip: 2,
 			},
 			want: fmt.Sprintf(
-				"%s;%s:%d;%s\n",
+				messageFormatWithStack,
 				now.Format(time.RFC3339),
 				fileName,
 				fileLine,
@@ -399,12 +419,28 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 			args: args{
 				time: now,
 				msg:  testMsg,
+				skip: 2,
 			},
 			want: fmt.Sprintf(
-				"%s;%s:%d;%s\n",
+				messageFormatWithStack,
 				now.Format(time.RFC3339Nano),
 				fileName,
 				fileLine,
+				testMsg,
+			),
+		},
+		{
+			fields: Log{
+				config: configSecond,
+			},
+			args: args{
+				time: now,
+				msg:  testMsg,
+				skip: 1000,
+			},
+			want: fmt.Sprintf(
+				messageFormatWithoutStack,
+				now.Format(time.RFC3339Nano),
 				testMsg,
 			),
 		},
@@ -414,7 +450,7 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 			a := &Log{
 				config: tt.fields.config,
 			}
-			if got := a.prepareLogWithStack(tt.args.time, tt.args.msg); got != tt.want {
+			if got := a.prepareLogWithStack(tt.args.time, tt.args.msg, tt.args.skip); got != tt.want {
 				t.Errorf("Log.prepareLogWithStack() = %v, want %v", got, tt.want)
 			}
 		})
@@ -702,6 +738,35 @@ func TestLog_Warning(t *testing.T) {
 			if got := a.Warning(tt.args.msg); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Log.Warning() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func Test_printNotConfiguredMessage(t *testing.T) {
+	type args struct {
+		code uint
+		skip int
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			args: args{
+				code: LoggerInfo,
+				skip: 2,
+			},
+		},
+		{
+			args: args{
+				code: LoggerInfo,
+				skip: 1000,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			printNotConfiguredMessage(tt.args.code, tt.args.skip)
 		})
 	}
 }

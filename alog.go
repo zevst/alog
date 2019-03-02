@@ -120,7 +120,6 @@ func GetFileStrategy(filePath string) io.Writer {
 				file: file,
 			}
 		}
-		log.Println(err)
 	}
 	return &FileStrategy{}
 }
@@ -156,8 +155,8 @@ func (l *Logger) writeMessage(msg string) {
 	}
 }
 
-func printNotConfiguredMessage(code uint) {
-	if _, fileName, fileLine, ok := runtime.Caller(2); ok {
+func printNotConfiguredMessage(code uint, skip int) {
+	if _, fileName, fileLine, ok := runtime.Caller(skip); ok {
 		log.Println(fmt.Sprintf("%s:%d Logger %s not configured", fileName, fileLine, LoggerName(code)))
 		return
 	}
@@ -170,7 +169,7 @@ func (a *Log) Info(msg string) *Log {
 	if logger := a.config.Loggers[LoggerInfo]; logger != nil {
 		logger.Channel <- a.prepareLog(time.Now(), msg)
 	} else {
-		printNotConfiguredMessage(LoggerInfo)
+		printNotConfiguredMessage(LoggerInfo, 2)
 	}
 	return a
 }
@@ -180,7 +179,7 @@ func (a *Log) Infof(format string, p ...interface{}) *Log {
 	if logger := a.config.Loggers[LoggerInfo]; logger != nil {
 		logger.Channel <- a.prepareLog(time.Now(), fmt.Sprintf(format, p...))
 	} else {
-		printNotConfiguredMessage(LoggerInfo)
+		printNotConfiguredMessage(LoggerInfo, 2)
 	}
 	return a
 }
@@ -190,7 +189,7 @@ func (a *Log) Warning(msg string) *Log {
 	if a.config.Loggers[LoggerWrn] != nil {
 		a.config.Loggers[LoggerWrn].Channel <- a.prepareLog(time.Now(), msg)
 	} else {
-		printNotConfiguredMessage(LoggerWrn)
+		printNotConfiguredMessage(LoggerWrn, 2)
 	}
 	return a
 }
@@ -202,7 +201,7 @@ func (a *Log) Error(err error) *Log {
 			a.config.Loggers[LoggerErr].Channel <- a.prepareLog(time.Now(), err.Error())
 		}
 	} else {
-		printNotConfiguredMessage(LoggerErr)
+		printNotConfiguredMessage(LoggerErr, 2)
 	}
 	return a
 }
@@ -211,11 +210,11 @@ func (a *Log) Error(err error) *Log {
 func (a *Log) ErrorDebug(err error) *Log {
 	if a.config.Loggers[LoggerErr] != nil {
 		if err != nil {
-			msg := fmt.Sprintf(messageFormatErrorDebug, a.prepareLogWithStack(time.Now(), err.Error()), string(debug.Stack()))
+			msg := fmt.Sprintf(messageFormatErrorDebug, a.prepareLogWithStack(time.Now(), err.Error(), 2), string(debug.Stack()))
 			a.config.Loggers[LoggerErr].Channel <- msg
 		}
 	} else {
-		printNotConfiguredMessage(LoggerErr)
+		printNotConfiguredMessage(LoggerErr, 2)
 	}
 	return a
 }
@@ -227,8 +226,8 @@ func (a *Log) getTimeFormat() string {
 	return time.RFC3339Nano
 }
 
-func (a *Log) prepareLogWithStack(time time.Time, msg string) string {
-	if _, fileName, fileLine, ok := runtime.Caller(2); ok {
+func (a *Log) prepareLogWithStack(time time.Time, msg string, skip int) string {
+	if _, fileName, fileLine, ok := runtime.Caller(skip); ok {
 		return fmt.Sprintf(
 			messageFormatWithStack,
 			time.Format(a.getTimeFormat()),
@@ -254,6 +253,7 @@ func (a *Log) prepareLog(time time.Time, msg string) string {
 
 func openFile(filePath string) (afero.File, error) {
 	if filePath == "" {
+		log.Println(afero.ErrFileNotFound)
 		return nil, afero.ErrFileNotFound
 	}
 	return fs.OpenFile(filePath, fileOptions, filePermission)
