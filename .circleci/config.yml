@@ -1,8 +1,9 @@
 version: 2
 jobs:
-  build:
+  test:
     docker:
       - image: circleci/golang:latest
+    parallelism: 4
     working_directory: /go/src/github.com/mylockerteam/alog
     steps:
       - checkout

@@ -63,7 +63,7 @@ type testCreateDirectoryIfNotExist struct {
 	wantErr bool
 }
 
-func dataProviderCreateDirectoryIfNotExist() []testCreateDirectoryIfNotExist {
+func casesCreateDirectoryIfNotExist() []testCreateDirectoryIfNotExist {
 	return []testCreateDirectoryIfNotExist{
 		{
 			args: argsCreateDirectoryIfNotExist{
@@ -87,7 +87,7 @@ func dataProviderCreateDirectoryIfNotExist() []testCreateDirectoryIfNotExist {
 }
 
 func Test_createDirectoryIfNotExist(t *testing.T) {
-	tests := dataProviderCreateDirectoryIfNotExist()
+	tests := casesCreateDirectoryIfNotExist()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := createDirectoryIfNotExist(tt.args.dirPath); (err != nil) != tt.wantErr {
@@ -109,7 +109,7 @@ type testPrepareLog struct {
 	want   string
 }
 
-func dataProviderPrepareLog() []testPrepareLog {
+func casesPrepareLog() []testPrepareLog {
 	now := time.Now()
 	configFirst := configProvider()
 	configFirst.TimeFormat = time.RFC3339
@@ -120,7 +120,7 @@ func dataProviderPrepareLog() []testPrepareLog {
 		LoggerInfo: loggerProvider(),
 		LoggerErr:  loggerErr,
 	}
-	tests := []testPrepareLog{
+	return []testPrepareLog{
 		{
 			fields: Log{
 				config: configFirst,
@@ -150,11 +150,10 @@ func dataProviderPrepareLog() []testPrepareLog {
 			),
 		},
 	}
-	return tests
 }
 
 func TestLog_prepareLog(t *testing.T) {
-	tests := dataProviderPrepareLog()
+	tests := casesPrepareLog()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &Log{
@@ -178,8 +177,8 @@ type testsOpenFile struct {
 	wantErr bool
 }
 
-func dataProviderOpenFile() []testsOpenFile {
-	tests := []testsOpenFile{
+func casesOpenFile() []testsOpenFile {
+	return []testsOpenFile{
 		{
 			args: argsOpenFile{
 				filePath: fmt.Sprintf("/tmp/%s/", randStringRunes(10)),
@@ -199,11 +198,10 @@ func dataProviderOpenFile() []testsOpenFile {
 			wantErr: true,
 		},
 	}
-	return tests
 }
 
 func Test_openFile(t *testing.T) {
-	tests := dataProviderOpenFile()
+	tests := casesOpenFile()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := openFile(tt.args.filePath)
@@ -218,35 +216,42 @@ func Test_openFile(t *testing.T) {
 	}
 }
 
-func Test_addDirectory(t *testing.T) {
-	type args struct {
-		filePath string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
+type argsAddDirectory struct {
+	filePath string
+}
+
+type testsAddDirectory struct {
+	name    string
+	args    argsAddDirectory
+	wantErr bool
+}
+
+func casesAddDirectory() []testsAddDirectory {
+	return []testsAddDirectory{
 		{
-			args: args{
+			args: argsAddDirectory{
 				filePath: "/",
 			},
 			wantErr: false,
 		},
 		{
 			name: ErrCanNotCreateDirectory,
-			args: args{
+			args: argsAddDirectory{
 				filePath: "",
 			},
 			wantErr: true,
 		},
 		{
-			args: args{
+			args: argsAddDirectory{
 				filePath: fmt.Sprintf("/tmp/%s/", randStringRunes(10)),
 			},
 			wantErr: false,
 		},
 	}
+}
+
+func Test_addDirectory(t *testing.T) {
+	tests := casesAddDirectory()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := addDirectory(tt.args.filePath); (err != nil) != tt.wantErr {
@@ -258,22 +263,25 @@ func Test_addDirectory(t *testing.T) {
 	}
 }
 
-func TestLog_Error(t *testing.T) {
-	type args struct {
-		err error
-	}
+type argsLogError struct {
+	err error
+}
+
+type testsLogError struct {
+	name   string
+	fields Log
+	args   argsLogError
+	want   *Log
+}
+
+func casesLogError() []testsLogError {
 	info := configProvider()
 	err := &Config{
 		Loggers: LoggerMap{
 			LoggerErr: loggerProvider(),
 		},
 	}
-	tests := []struct {
-		name   string
-		fields Log
-		args   args
-		want   *Log
-	}{
+	return []testsLogError{
 		{
 			fields: Log{
 				config: info,
@@ -294,7 +302,7 @@ func TestLog_Error(t *testing.T) {
 			fields: Log{
 				config: err,
 			},
-			args: args{
+			args: argsLogError{
 				err: fmt.Errorf("error for test"),
 			},
 			want: &Log{
@@ -302,6 +310,10 @@ func TestLog_Error(t *testing.T) {
 			},
 		},
 	}
+}
+
+func TestLog_Error(t *testing.T) {
+	tests := casesLogError()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &Log{
@@ -314,22 +326,25 @@ func TestLog_Error(t *testing.T) {
 	}
 }
 
-func TestLog_ErrorDebug(t *testing.T) {
-	type args struct {
-		err error
-	}
+type argsLogErrorDebug struct {
+	err error
+}
+
+type testsLogErrorDebug struct {
+	name   string
+	fields Log
+	args   argsLogErrorDebug
+	want   *Log
+}
+
+func casesLogErrorDebug() []testsLogErrorDebug {
 	info := configProvider()
 	err := &Config{
 		Loggers: LoggerMap{
 			LoggerErr: loggerProvider(),
 		},
 	}
-	tests := []struct {
-		name   string
-		fields Log
-		args   args
-		want   *Log
-	}{
+	return []testsLogErrorDebug{
 		{
 			fields: Log{
 				config: info,
@@ -350,7 +365,7 @@ func TestLog_ErrorDebug(t *testing.T) {
 			fields: Log{
 				config: err,
 			},
-			args: args{
+			args: argsLogErrorDebug{
 				err: fmt.Errorf("error for test"),
 			},
 			want: &Log{
@@ -358,6 +373,10 @@ func TestLog_ErrorDebug(t *testing.T) {
 			},
 		},
 	}
+}
+
+func TestLog_ErrorDebug(t *testing.T) {
+	tests := casesLogErrorDebug()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &Log{
@@ -370,15 +389,22 @@ func TestLog_ErrorDebug(t *testing.T) {
 	}
 }
 
-func TestLog_prepareLogWithStack(t *testing.T) {
-	type args struct {
-		time time.Time
-		msg  string
-		skip int
-	}
-	_, fileName, fileLine, _ := runtime.Caller(1)
-	now := time.Now()
+type argsLogPrepareLogWithStack struct {
+	time time.Time
+	msg  string
+	skip int
+}
 
+type testsLogPrepareLogWithStack struct {
+	name   string
+	fields Log
+	args   argsLogPrepareLogWithStack
+	want   string
+}
+
+func casesLogPrepareLogWithStack() []testsLogPrepareLogWithStack {
+	_, fileName, fileLine, _ := runtime.Caller(2)
+	now := time.Now()
 	configFirst := configProvider()
 	configFirst.TimeFormat = time.RFC3339
 	configSecond := configProvider()
@@ -388,18 +414,12 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 		LoggerInfo: loggerProvider(),
 		LoggerErr:  loggerErr,
 	}
-
-	tests := []struct {
-		name   string
-		fields Log
-		args   args
-		want   string
-	}{
+	return []testsLogPrepareLogWithStack{
 		{
 			fields: Log{
 				config: configFirst,
 			},
-			args: args{
+			args: argsLogPrepareLogWithStack{
 				time: now,
 				msg:  testMsg,
 				skip: 2,
@@ -416,7 +436,7 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 			fields: Log{
 				config: configSecond,
 			},
-			args: args{
+			args: argsLogPrepareLogWithStack{
 				time: now,
 				msg:  testMsg,
 				skip: 2,
@@ -433,7 +453,7 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 			fields: Log{
 				config: configSecond,
 			},
-			args: args{
+			args: argsLogPrepareLogWithStack{
 				time: now,
 				msg:  testMsg,
 				skip: 1000,
@@ -445,6 +465,10 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 			),
 		},
 	}
+}
+
+func TestLog_prepareLogWithStack(t *testing.T) {
+	tests := casesLogPrepareLogWithStack()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &Log{
@@ -457,22 +481,25 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 	}
 }
 
-func TestLogger_writeMessage(t *testing.T) {
-	type args struct {
-		msg string
-	}
+type argsLoggerWriteMessage struct {
+	msg string
+}
+
+type testsLoggerWriteMessage struct {
+	name   string
+	fields Logger
+	args   argsLoggerWriteMessage
+}
+
+func casesLoggerWriteMessage() []testsLoggerWriteMessage {
 	logger := loggerProvider()
-	tests := []struct {
-		name   string
-		fields Logger
-		args   args
-	}{
+	return []testsLoggerWriteMessage{
 		{
 			fields: Logger{
 				logger.Channel,
 				logger.Strategies,
 			},
-			args: args{
+			args: argsLoggerWriteMessage{
 				msg: testMsg,
 			},
 		},
@@ -483,11 +510,15 @@ func TestLogger_writeMessage(t *testing.T) {
 					GetFileStrategy(""),
 				},
 			},
-			args: args{
+			args: argsLoggerWriteMessage{
 				msg: testMsg,
 			},
 		},
 	}
+}
+
+func TestLogger_writeMessage(t *testing.T) {
+	tests := casesLoggerWriteMessage()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &Logger{
@@ -499,13 +530,15 @@ func TestLogger_writeMessage(t *testing.T) {
 	}
 }
 
-func TestLogger_reader(t *testing.T) {
+type testsLoggerReader struct {
+	name   string
+	fields Logger
+}
+
+func casesLoggerReader() []testsLoggerReader {
 	logger := loggerProvider()
 	logger.Channel <- testMsg
-	tests := []struct {
-		name   string
-		fields Logger
-	}{
+	return []testsLoggerReader{
 		{
 			fields: Logger{
 				logger.Channel,
@@ -513,6 +546,10 @@ func TestLogger_reader(t *testing.T) {
 			},
 		},
 	}
+}
+
+func TestLogger_reader(t *testing.T) {
+	tests := casesLoggerReader()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &Logger{
@@ -524,25 +561,28 @@ func TestLogger_reader(t *testing.T) {
 	}
 }
 
-func Test_io_Write(t *testing.T) {
-	type args struct {
-		p []byte
-	}
+type argsIoWrite struct {
+	p []byte
+}
+
+type testsIoWrite struct {
+	name    string
+	fields  Logger
+	args    argsIoWrite
+	wantN   int
+	wantErr bool
+}
+
+func casesIoWrite() []testsIoWrite {
 	logger := loggerProvider()
 	close(logger.Channel)
-	tests := []struct {
-		name    string
-		fields  Logger
-		args    args
-		wantN   int
-		wantErr bool
-	}{
+	return []testsIoWrite{
 		{
 			fields: Logger{
 				make(chan string, 1),
 				logger.Strategies,
 			},
-			args: args{
+			args: argsIoWrite{
 				p: []byte(testMsg),
 			},
 			wantErr: false,
@@ -553,13 +593,17 @@ func Test_io_Write(t *testing.T) {
 				logger.Channel,
 				logger.Strategies,
 			},
-			args: args{
+			args: argsIoWrite{
 				p: []byte(testMsg),
 			},
 			wantErr: true,
 			wantN:   0,
 		},
 	}
+}
+
+func Test_io_Write(t *testing.T) {
+	tests := casesIoWrite()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &Logger{
@@ -578,18 +622,21 @@ func Test_io_Write(t *testing.T) {
 	}
 }
 
-func TestCreate(t *testing.T) {
-	type args struct {
-		config *Config
-	}
+type argsCreate struct {
+	config *Config
+}
+
+type testsCreate struct {
+	name string
+	args argsCreate
+	want *Log
+}
+
+func casesCreate() []testsCreate {
 	config := configProvider()
-	tests := []struct {
-		name string
-		args args
-		want *Log
-	}{
+	return []testsCreate{
 		{
-			args: args{
+			args: argsCreate{
 				config: config,
 			},
 			want: &Log{
@@ -597,6 +644,10 @@ func TestCreate(t *testing.T) {
 			},
 		},
 	}
+}
+
+func TestCreate(t *testing.T) {
+	tests := casesCreate()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Create(tt.args.config); !reflect.DeepEqual(got, tt.want) {
@@ -606,22 +657,25 @@ func TestCreate(t *testing.T) {
 	}
 }
 
-func TestLog_Info(t *testing.T) {
-	type args struct {
-		msg string
-	}
+type argsLogInfo struct {
+	msg string
+}
+
+type testsLogInfo struct {
+	name   string
+	fields Log
+	args   argsLogInfo
+	want   *Log
+}
+
+func casesLogInfo() []testsLogInfo {
 	info := configProvider()
 	wrn := &Config{
 		Loggers: LoggerMap{
 			LoggerWrn: loggerProvider(),
 		},
 	}
-	tests := []struct {
-		name   string
-		fields Log
-		args   args
-		want   *Log
-	}{
+	return []testsLogInfo{
 		{
 			fields: Log{
 				config: info,
@@ -639,6 +693,10 @@ func TestLog_Info(t *testing.T) {
 			},
 		},
 	}
+}
+
+func TestLog_Info(t *testing.T) {
+	tests := casesLogInfo()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &Log{
@@ -651,23 +709,26 @@ func TestLog_Info(t *testing.T) {
 	}
 }
 
-func TestLog_Infof(t *testing.T) {
-	type args struct {
-		format string
-		p      []interface{}
-	}
+type argsLogInfof struct {
+	format string
+	p      []interface{}
+}
+
+type testsLogInfof struct {
+	name   string
+	fields Log
+	args   argsLogInfof
+	want   *Log
+}
+
+func casesLogInfof() []testsLogInfof {
 	info := configProvider()
 	wrn := &Config{
 		Loggers: LoggerMap{
 			LoggerWrn: loggerProvider(),
 		},
 	}
-	tests := []struct {
-		name   string
-		fields Log
-		args   args
-		want   *Log
-	}{
+	return []testsLogInfof{
 		{
 			fields: Log{
 				config: info,
@@ -685,6 +746,10 @@ func TestLog_Infof(t *testing.T) {
 			},
 		},
 	}
+}
+
+func TestLog_Infof(t *testing.T) {
+	tests := casesLogInfof()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &Log{
@@ -697,22 +762,25 @@ func TestLog_Infof(t *testing.T) {
 	}
 }
 
-func TestLog_Warning(t *testing.T) {
-	type args struct {
-		msg string
-	}
+type argsLogWarning struct {
+	msg string
+}
+
+type testsLogWarning struct {
+	name   string
+	fields Log
+	args   argsLogWarning
+	want   *Log
+}
+
+func casesLogWarning() []testsLogWarning {
 	info := configProvider()
 	wrn := &Config{
 		Loggers: LoggerMap{
 			LoggerWrn: loggerProvider(),
 		},
 	}
-	tests := []struct {
-		name   string
-		fields Log
-		args   args
-		want   *Log
-	}{
+	return []testsLogWarning{
 		{
 			fields: Log{
 				config: info,
@@ -730,6 +798,10 @@ func TestLog_Warning(t *testing.T) {
 			},
 		},
 	}
+}
+
+func TestLog_Warning(t *testing.T) {
+	tests := casesLogWarning()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &Log{
@@ -742,28 +814,35 @@ func TestLog_Warning(t *testing.T) {
 	}
 }
 
-func Test_printNotConfiguredMessage(t *testing.T) {
-	type args struct {
-		code uint
-		skip int
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
+type argsPrintNotConfiguredMessage struct {
+	code uint
+	skip int
+}
+
+type testsPrintNotConfiguredMessage struct {
+	name string
+	args argsPrintNotConfiguredMessage
+}
+
+func casesPrintNotConfiguredMessage() []testsPrintNotConfiguredMessage {
+	return []testsPrintNotConfiguredMessage{
 		{
-			args: args{
+			args: argsPrintNotConfiguredMessage{
 				code: LoggerInfo,
 				skip: 2,
 			},
 		},
 		{
-			args: args{
+			args: argsPrintNotConfiguredMessage{
 				code: LoggerInfo,
 				skip: 1000,
 			},
 		},
 	}
+}
+
+func Test_printNotConfiguredMessage(t *testing.T) {
+	tests := casesPrintNotConfiguredMessage()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			printNotConfiguredMessage(tt.args.code, tt.args.skip)
