@@ -49,6 +49,7 @@ var fs = afero.NewOsFs()
 
 // Logger logger structure which includes a channel and a slice strategies
 type Logger struct {
+	io.Writer
 	Channel    chan string
 	Strategies []io.Writer
 }
@@ -69,10 +70,12 @@ type Log struct {
 
 // DefaultStrategy logging strategy in the console
 type DefaultStrategy struct {
+	io.Writer
 }
 
 //FileStrategy logging strategy in the file
 type FileStrategy struct {
+	io.Writer
 	file afero.File
 }
 
@@ -170,9 +173,17 @@ func printNotConfiguredMessage(code uint, skip int) {
 	log.Println(fmt.Sprintf("Logger %s not configured", LoggerName(code)))
 }
 
+// GetLoggerInterfaceByType returns io.Writer interface for logging in third-party libraries
+func (a *Log) GetLoggerInterfaceByType(loggerType uint) io.Writer {
+	if logger := a.config.Loggers[loggerType]; logger != nil {
+		return logger
+	}
+	printNotConfiguredMessage(loggerType, 2)
+	return &DefaultStrategy{}
+}
+
 // Info method for recording informational messages
 func (a *Log) Info(msg string) *Log {
-
 	if logger := a.config.Loggers[LoggerInfo]; logger != nil {
 		logger.Channel <- a.prepareLog(time.Now(), msg)
 	} else {
