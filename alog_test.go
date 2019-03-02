@@ -37,7 +37,7 @@ func randStringRunes(n int) string {
 
 func loggerProvider() *Logger {
 	return &Logger{
-		Channel: make(chan string, 100),
+		Channel: make(chan string, 1),
 		Strategies: []io.Writer{
 			GetFileStrategy(fmt.Sprintf("/tmp/%s/", randStringRunes(10))),
 			GetDefaultStrategy(),
@@ -496,8 +496,8 @@ func casesLoggerWriteMessage() []testsLoggerWriteMessage {
 	return []testsLoggerWriteMessage{
 		{
 			fields: Logger{
-				logger.Channel,
-				logger.Strategies,
+				Channel:    logger.Channel,
+				Strategies: logger.Strategies,
 			},
 			args: argsLoggerWriteMessage{
 				msg: testMsg,
@@ -541,8 +541,8 @@ func casesLoggerReader() []testsLoggerReader {
 	return []testsLoggerReader{
 		{
 			fields: Logger{
-				logger.Channel,
-				logger.Strategies,
+				Channel:    logger.Channel,
+				Strategies: logger.Strategies,
 			},
 		},
 	}
@@ -579,8 +579,8 @@ func casesIoWrite() []testsIoWrite {
 	return []testsIoWrite{
 		{
 			fields: Logger{
-				make(chan string, 1),
-				logger.Strategies,
+				Channel:    make(chan string, 1),
+				Strategies: logger.Strategies,
 			},
 			args: argsIoWrite{
 				p: []byte(testMsg),
@@ -590,8 +590,8 @@ func casesIoWrite() []testsIoWrite {
 		},
 		{
 			fields: Logger{
-				logger.Channel,
-				logger.Strategies,
+				Channel:    logger.Channel,
+				Strategies: logger.Strategies,
 			},
 			args: argsIoWrite{
 				p: []byte(testMsg),
@@ -842,6 +842,83 @@ func Test_printNotConfiguredMessage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			printNotConfiguredMessage(tt.args.code, tt.args.skip)
+		})
+	}
+}
+
+type argsLogGetLoggerInterfaceByType struct {
+	loggerType uint
+}
+
+type testsLogGetLoggerInterfaceByType struct {
+	name   string
+	fields Log
+	args   argsLogGetLoggerInterfaceByType
+	want   io.Writer
+}
+
+func casesLogGetLoggerInterfaceByType() []testsLogGetLoggerInterfaceByType {
+	config := configProvider()
+	wrn := &Config{
+		Loggers: LoggerMap{
+			LoggerWrn: loggerProvider(),
+		},
+	}
+	err := &Config{
+		Loggers: LoggerMap{
+			LoggerErr: loggerProvider(),
+		},
+	}
+	return []testsLogGetLoggerInterfaceByType{
+		{
+			fields: Log{
+				config: config,
+			},
+			args: argsLogGetLoggerInterfaceByType{
+				loggerType: LoggerInfo,
+			},
+			want: config.Loggers[LoggerInfo],
+		},
+		{
+			fields: Log{
+				config: wrn,
+			},
+			args: argsLogGetLoggerInterfaceByType{
+				loggerType: LoggerWrn,
+			},
+			want: wrn.Loggers[LoggerWrn],
+		},
+		{
+			fields: Log{
+				config: err,
+			},
+			args: argsLogGetLoggerInterfaceByType{
+				loggerType: LoggerErr,
+			},
+			want: err.Loggers[LoggerErr],
+		},
+		{
+			fields: Log{
+				config: &Config{},
+			},
+			args: argsLogGetLoggerInterfaceByType{
+				loggerType: 3,
+			},
+			want: &DefaultStrategy{},
+		},
+	}
+}
+
+func TestLog_GetLoggerInterfaceByType(t *testing.T) {
+	tests := casesLogGetLoggerInterfaceByType()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &Log{
+				config: tt.fields.config,
+			}
+			if got := a.GetLoggerInterfaceByType(tt.args.loggerType); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Log.GetLoggerInterfaceByType() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
