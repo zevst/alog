@@ -11,22 +11,29 @@ import (
 	"testing"
 )
 
-func TestGetEnvStr(t *testing.T) {
-	type args struct {
-		key string
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
+type argsGetEnvStr struct {
+	key string
+}
+
+type testsGetEnvStr struct {
+	name string
+	args argsGetEnvStr
+	want string
+}
+
+func casesGetEnvStr() []testsGetEnvStr {
+	return []testsGetEnvStr{
 		{
-			args: args{
+			args: argsGetEnvStr{
 				key: "PATH",
 			},
 			want: os.Getenv("PATH"),
 		},
 	}
+}
+
+func TestGetEnvStr(t *testing.T) {
+	tests := casesGetEnvStr()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GetEnvStr(tt.args.key); got != tt.want {
