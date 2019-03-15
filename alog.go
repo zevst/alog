@@ -9,6 +9,7 @@ package alog
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"os"
@@ -17,7 +18,9 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/mylockerteam/mailSender"
 	"github.com/spf13/afero"
+	"gopkg.in/gomail.v2"
 )
 
 const (
@@ -31,12 +34,10 @@ const (
 	errCanNotCreateDirectory = "can't create directory"
 )
 
+// Logger types
 const (
-	// LoggerInfo logger type
 	LoggerInfo uint = iota
-	// LoggerWrn logger type
 	LoggerWrn
-	// LoggerErr logger type
 	LoggerErr
 )
 
@@ -73,10 +74,19 @@ type DefaultStrategy struct {
 	io.Writer
 }
 
-//FileStrategy logging strategy in the file
+// FileStrategy logging strategy in the file
 type FileStrategy struct {
-	io.Writer
 	file afero.File
+	io.Writer
+}
+
+// EmailStrategy logging strategy in the email
+// You can use it for errors and other types of messages
+type EmailStrategy struct {
+	sender   mailSender.AsyncSender
+	Message  *gomail.Message
+	Template *template.Template
+	io.Writer
 }
 
 var loggerName = map[uint]string{
@@ -141,6 +151,24 @@ func (s *FileStrategy) Write(p []byte) (n int, err error) {
 		return s.file.Write(p)
 	}
 	return 0, errors.New("file not defined")
+}
+
+//GetEmailStrategy waiting for a parameter ess in format host:port;username;password
+func GetEmailStrategy(sender mailSender.AsyncSender, msg *gomail.Message, tpl *template.Template) io.Writer {
+	return &EmailStrategy{
+		sender:   sender,
+		Message:  msg,
+		Template: tpl,
+	}
+}
+
+func (s *EmailStrategy) Write(p []byte) (n int, err error) {
+	s.sender.SendAsync(mailSender.Message{
+		Message:  s.Message,
+		Template: s.Template,
+		Data:     mailSender.EmailData{"Data": string(p)},
+	})
+	return len(p), nil
 }
 
 // Create creates an instance of the logger
