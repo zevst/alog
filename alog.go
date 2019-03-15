@@ -34,12 +34,10 @@ const (
 	errCanNotCreateDirectory = "can't create directory"
 )
 
+// Logger types
 const (
-	// LoggerInfo logger type
 	LoggerInfo uint = iota
-	// LoggerWrn logger type
 	LoggerWrn
-	// LoggerErr logger type
 	LoggerErr
 )
 
@@ -76,12 +74,14 @@ type DefaultStrategy struct {
 	io.Writer
 }
 
-//FileStrategy logging strategy in the file
+// FileStrategy logging strategy in the file
 type FileStrategy struct {
 	file afero.File
 	io.Writer
 }
 
+// EmailStrategy logging strategy in the email
+// You can use it for errors and other types of messages
 type EmailStrategy struct {
 	sender   mailSender.AsyncSender
 	Message  *gomail.Message
