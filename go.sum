@@ -1,4 +1,14 @@
+github.com/golang/mock v1.2.0 h1:28o5sBqPkBsMGnC6b4MvE2TzSr5/AT4c/1fLqVGIwlk=
+github.com/golang/mock v1.2.0/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
+github.com/joho/godotenv v1.3.0/go.mod h1:7hK45KPybAkOC6peb+G5yklZfMxEjkZhHbwpqxOKXbg=
+github.com/mylockerteam/alog v0.0.6/go.mod h1:3R2nFzO8o6Ahs/O1PyWFMqLbQyyKqk4oV/FkGCQUV+g=
+github.com/mylockerteam/gonfig v1.0.0/go.mod h1:4XiTTamIwwVujap1iT+YQSg2hcOhGIkUXnJ5H7xToLc=
+github.com/mylockerteam/mailSender v0.0.0-20190315220807-36ac1ab8418d h1:m1NDvP3XWc+jJUO+KVF0Darcxw/V70zPXOVEfKk+ESs=
+github.com/mylockerteam/mailSender v0.0.0-20190315220807-36ac1ab8418d/go.mod h1:+NimOM+8WZhbQ/2RAChqvqrffrms0nU57D/LOFe4Od4=
 github.com/spf13/afero v1.2.1 h1:qgMbHoJbPbw579P+1zVY+6n4nIFuIchaIjzZ/I/Yq8M=
 github.com/spf13/afero v1.2.1/go.mod h1:9ZxEEn6pIJ8Rxe320qSDBk6AsU0r9pR7Q4OcevTdifk=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc/go.mod h1:m7x9LTH6d71AHyAX77c9yqWCCa3UKHcVEj9y7hAtKDk=
+gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df h1:n7WqCuqOuCbNr617RXOY0AWRXxgwEyPp2z+p0+hgMuE=
+gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df/go.mod h1:LRQQ+SO6ZHR7tOkpBDuZnXENFzX8qRjMDMyPD6BRkCw=
