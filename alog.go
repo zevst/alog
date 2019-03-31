@@ -82,13 +82,13 @@ type Log struct {
 
 // DefaultStrategy logging strategy in the console
 type DefaultStrategy struct {
-	io.Writer
+	_ io.Writer
 }
 
 // FileStrategy logging strategy in the file
 type FileStrategy struct {
+	_    io.Writer
 	file afero.File
-	io.Writer
 }
 
 // EmailStrategy logging strategy in the email
@@ -194,31 +194,35 @@ func Create(config *Config) Logged {
 func Default(chanBuffer uint) Logged {
 	config := &Config{
 		TimeFormat: time.RFC3339Nano,
-		Loggers: LoggerMap{
-			LoggerInfo: &Logger{
-				Channel: make(chan string, chanBuffer),
-				Strategies: []io.Writer{
-					GetFileStrategy(os.Stdout.Name()),
-				},
-			},
-			LoggerWrn: &Logger{
-				Channel: make(chan string, chanBuffer),
-				Strategies: []io.Writer{
-					GetFileStrategy(os.Stdout.Name()),
-				},
-			},
-			LoggerErr: &Logger{
-				Channel: make(chan string, chanBuffer),
-				Strategies: []io.Writer{
-					GetFileStrategy(os.Stderr.Name()),
-				},
-			},
-		},
+		Loggers:    getDefaultLoggerMap(chanBuffer),
 	}
 	for _, logger := range config.Loggers {
 		go logger.reader()
 	}
 	return &Log{config: config}
+}
+
+func getDefaultLoggerMap(chanBuffer uint) LoggerMap {
+	return LoggerMap{
+		LoggerInfo: &Logger{
+			Channel: make(chan string, chanBuffer),
+			Strategies: []io.Writer{
+				&FileStrategy{file: os.Stdout},
+			},
+		},
+		LoggerWrn: &Logger{
+			Channel: make(chan string, chanBuffer),
+			Strategies: []io.Writer{
+				&FileStrategy{file: os.Stdout},
+			},
+		},
+		LoggerErr: &Logger{
+			Channel: make(chan string, chanBuffer),
+			Strategies: []io.Writer{
+				&FileStrategy{file: os.Stderr},
+			},
+		},
+	}
 }
 
 func (l *Logger) reader() {
