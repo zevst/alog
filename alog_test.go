@@ -8,9 +8,6 @@ package alog
 
 import (
 	"fmt"
-	"github.com/mylockerteam/alog/mocks"
-	"github.com/mylockerteam/mailSender"
-	"gopkg.in/gomail.v2"
 	"html/template"
 	"io"
 	"math/rand"
@@ -21,7 +18,10 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/mylockerteam/alog/mocks"
+	"github.com/mylockerteam/mailSender"
 	"github.com/spf13/afero"
+	"gopkg.in/gomail.v2"
 )
 
 const testMsg = "Hello, ALog!"
@@ -103,75 +103,6 @@ func Test_createDirectoryIfNotExist(t *testing.T) {
 	}
 }
 
-type argsPrepareLog struct {
-	time time.Time
-	msg  string
-}
-
-type testPrepareLog struct {
-	name   string
-	fields Log
-	args   argsPrepareLog
-	want   string
-}
-
-func casesPrepareLog() []testPrepareLog {
-	now := time.Now()
-	configFirst := configProvider()
-	configFirst.TimeFormat = time.RFC3339
-	configSecond := configProvider()
-	loggerErr := loggerProvider()
-	loggerErr.addStrategy(GetFileStrategy(""))
-	configSecond.Loggers = LoggerMap{
-		LoggerInfo: loggerProvider(),
-		LoggerErr:  loggerErr,
-	}
-	return []testPrepareLog{
-		{
-			fields: Log{
-				config: configFirst,
-			},
-			args: argsPrepareLog{
-				time: now,
-				msg:  testMsg,
-			},
-			want: fmt.Sprintf(
-				"%s;%s\n",
-				now.Format(time.RFC3339),
-				testMsg,
-			),
-		},
-		{
-			fields: Log{
-				config: configSecond,
-			},
-			args: argsPrepareLog{
-				time: now,
-				msg:  testMsg,
-			},
-			want: fmt.Sprintf(
-				"%s;%s\n",
-				now.Format(time.RFC3339Nano),
-				testMsg,
-			),
-		},
-	}
-}
-
-func TestLog_prepareLog(t *testing.T) {
-	tests := casesPrepareLog()
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			a := &Log{
-				config: tt.fields.config,
-			}
-			if got := a.prepareLog(tt.args.time, tt.args.msg); got != tt.want {
-				t.Errorf("Log.prepareLog() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 type argsOpenFile struct {
 	filePath string
 }
@@ -202,6 +133,18 @@ func casesOpenFile() []testsOpenFile {
 				filePath: "",
 			},
 			wantErr: true,
+		},
+		{
+			args: argsOpenFile{
+				filePath: "/dev/stdout",
+			},
+			wantErr: false,
+		},
+		{
+			args: argsOpenFile{
+				filePath: "/dev/stderr",
+			},
+			wantErr: false,
 		},
 	}
 }
@@ -241,7 +184,6 @@ func casesAddDirectory() []testsAddDirectory {
 			wantErr: false,
 		},
 		{
-			name: errCanNotCreateDirectory,
 			args: argsAddDirectory{
 				filePath: "",
 			},
@@ -261,9 +203,7 @@ func Test_addDirectory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := addDirectory(tt.args.filePath); (err != nil) != tt.wantErr {
-				if err.Error() == errCanNotCreateDirectory && tt.name != errCanNotCreateDirectory {
-					t.Errorf("addDirectory() error = %v, wantErr %v", err, tt.wantErr)
-				}
+				t.Errorf("addDirectory() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -275,9 +215,9 @@ type argsLogError struct {
 
 type testsLogError struct {
 	name   string
-	fields Log
+	fields Logged
 	args   argsLogError
-	want   *Log
+	want   Logged
 }
 
 func casesLogError() []testsLogError {
@@ -289,7 +229,7 @@ func casesLogError() []testsLogError {
 	}
 	return []testsLogError{
 		{
-			fields: Log{
+			fields: &Log{
 				config: info,
 			},
 			want: &Log{
@@ -297,7 +237,7 @@ func casesLogError() []testsLogError {
 			},
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: err,
 			},
 			want: &Log{
@@ -305,7 +245,7 @@ func casesLogError() []testsLogError {
 			},
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: err,
 			},
 			args: argsLogError{
@@ -322,10 +262,7 @@ func TestLog_Error(t *testing.T) {
 	tests := casesLogError()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &Log{
-				config: tt.fields.config,
-			}
-			if got := a.Error(tt.args.err); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.fields.Error(tt.args.err); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Log.Error() = %v, want %v", got, tt.want)
 			}
 		})
@@ -338,9 +275,9 @@ type argsLogErrorDebug struct {
 
 type testsLogErrorDebug struct {
 	name   string
-	fields Log
+	fields Logged
 	args   argsLogErrorDebug
-	want   *Log
+	want   Logged
 }
 
 func casesLogErrorDebug() []testsLogErrorDebug {
@@ -352,7 +289,7 @@ func casesLogErrorDebug() []testsLogErrorDebug {
 	}
 	return []testsLogErrorDebug{
 		{
-			fields: Log{
+			fields: &Log{
 				config: info,
 			},
 			want: &Log{
@@ -360,7 +297,7 @@ func casesLogErrorDebug() []testsLogErrorDebug {
 			},
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: err,
 			},
 			want: &Log{
@@ -368,7 +305,7 @@ func casesLogErrorDebug() []testsLogErrorDebug {
 			},
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: err,
 			},
 			args: argsLogErrorDebug{
@@ -385,10 +322,7 @@ func TestLog_ErrorDebug(t *testing.T) {
 	tests := casesLogErrorDebug()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &Log{
-				config: tt.fields.config,
-			}
-			if got := a.ErrorDebug(tt.args.err); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.fields.ErrorDebug(tt.args.err); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Log.ErrorDebug() = %v, want %v", got, tt.want)
 			}
 		})
@@ -403,7 +337,7 @@ type argsLogPrepareLogWithStack struct {
 
 type testsLogPrepareLogWithStack struct {
 	name   string
-	fields Log
+	fields Logged
 	args   argsLogPrepareLogWithStack
 	want   string
 }
@@ -413,7 +347,9 @@ func casesLogPrepareLogWithStack() []testsLogPrepareLogWithStack {
 	now := time.Now()
 	configFirst := configProvider()
 	configFirst.TimeFormat = time.RFC3339
+	configFirst.IgnoreFileLine = true
 	configSecond := configProvider()
+	configSecond.IgnoreFileLine = true
 	loggerErr := loggerProvider()
 	loggerErr.addStrategy(GetFileStrategy(""))
 	configSecond.Loggers = LoggerMap{
@@ -422,7 +358,7 @@ func casesLogPrepareLogWithStack() []testsLogPrepareLogWithStack {
 	}
 	return []testsLogPrepareLogWithStack{
 		{
-			fields: Log{
+			fields: &Log{
 				config: configFirst,
 			},
 			args: argsLogPrepareLogWithStack{
@@ -431,7 +367,7 @@ func casesLogPrepareLogWithStack() []testsLogPrepareLogWithStack {
 				skip: 2,
 			},
 			want: fmt.Sprintf(
-				messageFormatWithStack,
+				messageFormatWithFileLine,
 				now.Format(time.RFC3339),
 				fileName,
 				fileLine,
@@ -439,7 +375,7 @@ func casesLogPrepareLogWithStack() []testsLogPrepareLogWithStack {
 			),
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: configSecond,
 			},
 			args: argsLogPrepareLogWithStack{
@@ -448,7 +384,7 @@ func casesLogPrepareLogWithStack() []testsLogPrepareLogWithStack {
 				skip: 2,
 			},
 			want: fmt.Sprintf(
-				messageFormatWithStack,
+				messageFormatWithFileLine,
 				now.Format(time.RFC3339Nano),
 				fileName,
 				fileLine,
@@ -456,7 +392,7 @@ func casesLogPrepareLogWithStack() []testsLogPrepareLogWithStack {
 			),
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: configSecond,
 			},
 			args: argsLogPrepareLogWithStack{
@@ -465,7 +401,7 @@ func casesLogPrepareLogWithStack() []testsLogPrepareLogWithStack {
 				skip: 1000,
 			},
 			want: fmt.Sprintf(
-				messageFormatWithoutStack,
+				messageFormatDefault,
 				now.Format(time.RFC3339Nano),
 				testMsg,
 			),
@@ -477,11 +413,8 @@ func TestLog_prepareLogWithStack(t *testing.T) {
 	tests := casesLogPrepareLogWithStack()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &Log{
-				config: tt.fields.config,
-			}
-			if got := a.prepareLogWithStack(tt.args.time, tt.args.msg, tt.args.skip); got != tt.want {
-				t.Errorf("Log.prepareLogWithStack() = %v, want %v", got, tt.want)
+			if got := tt.fields.(*Log).prepareLog(tt.args.time, tt.args.msg, tt.args.skip); got != tt.want {
+				t.Errorf("Log.prepareLog() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -629,18 +562,16 @@ func Test_io_Write(t *testing.T) {
 }
 
 type testsCreate struct {
-	name string
-	args Log
-	want *Log
+	name   string
+	config *Config
+	want   Logged
 }
 
 func casesCreate() []testsCreate {
 	config := configProvider()
 	return []testsCreate{
 		{
-			args: Log{
-				config: config,
-			},
+			config: config,
 			want: &Log{
 				config: config,
 			},
@@ -652,10 +583,16 @@ func TestCreate(t *testing.T) {
 	tests := casesCreate()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Create(tt.args.config); !reflect.DeepEqual(got, tt.want) {
+			if got := Create(tt.config); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Create() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestDefault(t *testing.T) {
+	if got := Default(0); reflect.TypeOf(got) != reflect.TypeOf(&Log{}) {
+		t.Errorf("Create() = %v, want %v", got, &Log{})
 	}
 }
 
@@ -665,9 +602,9 @@ type argsLogInfo struct {
 
 type testsLogInfo struct {
 	name   string
-	fields Log
+	fields Logged
 	args   argsLogInfo
-	want   *Log
+	want   Logged
 }
 
 func casesLogInfo() []testsLogInfo {
@@ -679,7 +616,7 @@ func casesLogInfo() []testsLogInfo {
 	}
 	return []testsLogInfo{
 		{
-			fields: Log{
+			fields: &Log{
 				config: info,
 			},
 			want: &Log{
@@ -687,7 +624,7 @@ func casesLogInfo() []testsLogInfo {
 			},
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: wrn,
 			},
 			want: &Log{
@@ -701,10 +638,7 @@ func TestLog_Info(t *testing.T) {
 	tests := casesLogInfo()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &Log{
-				config: tt.fields.config,
-			}
-			if got := a.Info(tt.args.msg); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.fields.Info(tt.args.msg); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Log.Info() = %v, want %v", got, tt.want)
 			}
 		})
@@ -718,9 +652,9 @@ type argsLogInfof struct {
 
 type testsLogInfof struct {
 	name   string
-	fields Log
+	fields Logged
 	args   argsLogInfof
-	want   *Log
+	want   Logged
 }
 
 func casesLogInfof() []testsLogInfof {
@@ -732,7 +666,7 @@ func casesLogInfof() []testsLogInfof {
 	}
 	return []testsLogInfof{
 		{
-			fields: Log{
+			fields: &Log{
 				config: info,
 			},
 			want: &Log{
@@ -740,7 +674,7 @@ func casesLogInfof() []testsLogInfof {
 			},
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: wrn,
 			},
 			want: &Log{
@@ -754,10 +688,7 @@ func TestLog_Infof(t *testing.T) {
 	tests := casesLogInfof()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &Log{
-				config: tt.fields.config,
-			}
-			if got := a.Infof(tt.args.format, tt.args.p...); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.fields.Infof(tt.args.format, tt.args.p...); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Log.Infof() = %v, want %v", got, tt.want)
 			}
 		})
@@ -770,9 +701,9 @@ type argsLogWarning struct {
 
 type testsLogWarning struct {
 	name   string
-	fields Log
+	fields Logged
 	args   argsLogWarning
-	want   *Log
+	want   Logged
 }
 
 func casesLogWarning() []testsLogWarning {
@@ -784,7 +715,7 @@ func casesLogWarning() []testsLogWarning {
 	}
 	return []testsLogWarning{
 		{
-			fields: Log{
+			fields: &Log{
 				config: info,
 			},
 			want: &Log{
@@ -792,7 +723,7 @@ func casesLogWarning() []testsLogWarning {
 			},
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: wrn,
 			},
 			want: &Log{
@@ -806,10 +737,7 @@ func TestLog_Warning(t *testing.T) {
 	tests := casesLogWarning()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &Log{
-				config: tt.fields.config,
-			}
-			if got := a.Warning(tt.args.msg); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.fields.Warning(tt.args.msg); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Log.Warning() = %v, want %v", got, tt.want)
 			}
 		})
@@ -858,7 +786,7 @@ type argsLogGetLoggerInterfaceByType struct {
 
 type testsLogGetLoggerInterfaceByType struct {
 	name   string
-	fields Log
+	fields Logged
 	args   argsLogGetLoggerInterfaceByType
 	want   io.Writer
 }
@@ -877,7 +805,7 @@ func casesLogGetLoggerInterfaceByType() []testsLogGetLoggerInterfaceByType {
 	}
 	return []testsLogGetLoggerInterfaceByType{
 		{
-			fields: Log{
+			fields: &Log{
 				config: config,
 			},
 			args: argsLogGetLoggerInterfaceByType{
@@ -886,7 +814,7 @@ func casesLogGetLoggerInterfaceByType() []testsLogGetLoggerInterfaceByType {
 			want: config.Loggers[LoggerInfo],
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: wrn,
 			},
 			args: argsLogGetLoggerInterfaceByType{
@@ -895,7 +823,7 @@ func casesLogGetLoggerInterfaceByType() []testsLogGetLoggerInterfaceByType {
 			want: wrn.Loggers[LoggerWrn],
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: err,
 			},
 			args: argsLogGetLoggerInterfaceByType{
@@ -904,7 +832,7 @@ func casesLogGetLoggerInterfaceByType() []testsLogGetLoggerInterfaceByType {
 			want: err.Loggers[LoggerErr],
 		},
 		{
-			fields: Log{
+			fields: &Log{
 				config: &Config{},
 			},
 			args: argsLogGetLoggerInterfaceByType{
@@ -919,10 +847,7 @@ func TestLog_GetLoggerInterfaceByType(t *testing.T) {
 	tests := casesLogGetLoggerInterfaceByType()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &Log{
-				config: tt.fields.config,
-			}
-			if got := a.GetLoggerInterfaceByType(tt.args.loggerType); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.fields.GetLoggerInterfaceByType(tt.args.loggerType); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Log.GetLoggerInterfaceByType() = %v, want %v", got, tt.want)
 			}
 		})
