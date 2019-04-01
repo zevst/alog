@@ -8,15 +8,16 @@ package alog
 
 import (
 	"fmt"
-	"github.com/mylockerteam/alog/logger"
-	_default "github.com/mylockerteam/alog/strategy/default"
-	"github.com/mylockerteam/alog/strategy/file"
 	"io"
 	"log"
 	"os"
 	"runtime"
 	"runtime/debug"
 	"time"
+
+	"github.com/mylockerteam/alog/logger"
+	"github.com/mylockerteam/alog/strategy/file"
+	"github.com/mylockerteam/alog/strategy/standart"
 )
 
 const (
@@ -46,7 +47,7 @@ func Create(config *Config) Writer {
 	return &Log{config: config}
 }
 
-// Default created default logger. Writes to stdout and stderr
+// Default created standart logger. Writes to stdout and stderr
 func Default(chanBuffer uint) Writer {
 	config := &Config{
 		TimeFormat: time.RFC3339Nano,
@@ -95,7 +96,7 @@ func (a *Log) GetLoggerInterfaceByType(loggerType uint) io.Writer {
 		return l
 	}
 	printNotConfiguredMessage(loggerType, 2)
-	return &_default.Strategy{}
+	return &standart.Strategy{}
 }
 
 // Info method for recording informational messages

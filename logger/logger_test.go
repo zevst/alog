@@ -8,11 +8,11 @@ package logger
 
 import (
 	"fmt"
-	_default "github.com/mylockerteam/alog/strategy/default"
 	"io"
 	"testing"
 
 	"github.com/mylockerteam/alog/strategy/file"
+	"github.com/mylockerteam/alog/strategy/standart"
 	"github.com/mylockerteam/alog/util"
 )
 
@@ -23,7 +23,7 @@ func loggerProvider() *Logger {
 		Channel: make(chan string, 1),
 		Strategies: []io.Writer{
 			file.Get(fmt.Sprintf("/tmp/%s/", util.RandString(10))),
-			_default.Get(),
+			standart.Get(),
 		},
 	}
 }

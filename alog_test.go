@@ -8,15 +8,16 @@ package alog
 
 import (
 	"fmt"
-	"github.com/mylockerteam/alog/logger"
-	_default "github.com/mylockerteam/alog/strategy/default"
-	"github.com/mylockerteam/alog/strategy/file"
-	"github.com/mylockerteam/alog/util"
 	"io"
 	"reflect"
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/mylockerteam/alog/logger"
+	"github.com/mylockerteam/alog/strategy/file"
+	"github.com/mylockerteam/alog/strategy/standart"
+	"github.com/mylockerteam/alog/util"
 )
 
 const testMsg = "Hello, ALog!"
@@ -26,7 +27,7 @@ func loggerProvider() *logger.Logger {
 		Channel: make(chan string, 1),
 		Strategies: []io.Writer{
 			file.Get(fmt.Sprintf("/tmp/%s/", util.RandString(10))),
-			_default.Get(),
+			standart.Get(),
 		},
 	}
 }

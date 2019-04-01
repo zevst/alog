@@ -8,11 +8,12 @@ package alog
 
 import (
 	"fmt"
-	"github.com/mylockerteam/alog/logger"
-	"github.com/mylockerteam/alog/strategy/default"
 	"io"
 	"reflect"
 	"testing"
+
+	"github.com/mylockerteam/alog/logger"
+	"github.com/mylockerteam/alog/strategy/standart"
 )
 
 type argsLogInfo struct {
@@ -257,7 +258,7 @@ func casesLogGetLoggerInterfaceByType() []testsLogGetLoggerInterfaceByType {
 			args: argsLogGetLoggerInterfaceByType{
 				loggerType: 3,
 			},
-			want: &_default.Strategy{},
+			want: &standart.Strategy{},
 		},
 	}
 }
