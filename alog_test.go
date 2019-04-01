@@ -58,9 +58,7 @@ func casesLogPrepareLog() []testsLogPrepareLog {
 	now := time.Now()
 	configFirst := configProvider()
 	configFirst.TimeFormat = time.RFC3339
-	configFirst.IgnoreFileLine = true
 	configSecond := configProvider()
-	configSecond.IgnoreFileLine = true
 	loggerErr := loggerProvider()
 	loggerErr.Strategies = append(loggerErr.Strategies, file.Get(""))
 	configSecond.Loggers = logger.Map{
