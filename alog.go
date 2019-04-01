@@ -162,7 +162,7 @@ func (a *Log) getTimeFormat() string {
 }
 
 func (a *Log) prepareLog(time time.Time, msg string, skip int) string {
-	if _, fileName, fileLine, ok := runtime.Caller(skip); ok && a.config.IgnoreFileLine {
+	if _, fileName, fileLine, ok := runtime.Caller(skip); ok && !a.config.IgnoreFileLine {
 		return fmt.Sprintf(
 			messageFormatWithFileLine,
 			time.Format(a.getTimeFormat()),
