@@ -202,11 +202,38 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TestStrategy_Write(t *testing.T) {
-	strategy := Strategy{
-		File: os.Stdout,
+func TestWrite(t *testing.T) {
+	type args struct {
+		p []byte
 	}
-	if _, err := strategy.Write([]byte("Hello, Alog!")); err != nil {
-		t.Error(err)
+	tests := []struct {
+		name     string
+		args     args
+		strategy Strategy
+		wantErr  bool
+	}{
+		{
+			args: args{
+				[]byte("Hello, Alog!"),
+			},
+			strategy: Strategy{},
+			wantErr:  true,
+		},
+		{
+			args: args{
+				[]byte("Hello, Alog!"),
+			},
+			strategy: Strategy{
+				File: os.Stdout,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, err := tt.strategy.Write(tt.args.p); (err != nil) != tt.wantErr {
+				t.Errorf("Write() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }

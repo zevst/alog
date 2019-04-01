@@ -8,11 +8,12 @@ package logger
 
 import (
 	"fmt"
-	"github.com/mylockerteam/alog/strategy/default"
-	"github.com/mylockerteam/alog/strategy/file"
-	"github.com/mylockerteam/alog/util"
+	_default "github.com/mylockerteam/alog/strategy/default"
 	"io"
 	"testing"
+
+	"github.com/mylockerteam/alog/strategy/file"
+	"github.com/mylockerteam/alog/util"
 )
 
 const testMsg = "Hello, ALog!"
@@ -164,6 +165,43 @@ func TestLogger_reader(t *testing.T) {
 				Strategies: tt.fields.Strategies,
 			}
 			go l.Reader()
+		})
+	}
+}
+
+func TestName(t *testing.T) {
+	type args struct {
+		code uint
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			args: args{
+				code: Info,
+			},
+			want: "Info",
+		},
+		{
+			args: args{
+				code: Wrn,
+			},
+			want: "Warning",
+		},
+		{
+			args: args{
+				code: Err,
+			},
+			want: "Error",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Name(tt.args.code); got != tt.want {
+				t.Errorf("Name() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
