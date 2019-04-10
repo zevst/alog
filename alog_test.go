@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mylockerteam/alog/logger"
 	"github.com/mylockerteam/alog/strategy/file"
 	"github.com/mylockerteam/alog/strategy/standart"
 	"github.com/mylockerteam/alog/util"
@@ -22,8 +21,8 @@ import (
 
 const testMsg = "Hello, ALog!"
 
-func loggerProvider() *logger.Logger {
-	return &logger.Logger{
+func loggerProvider() *Logger {
+	return &Logger{
 		Channel: make(chan string, 1),
 		Strategies: []io.Writer{
 			file.Get(fmt.Sprintf("/tmp/%s/", util.RandString(10))),
@@ -34,8 +33,8 @@ func loggerProvider() *logger.Logger {
 
 func configProvider() *Config {
 	return &Config{
-		Loggers: logger.Map{
-			logger.Info: loggerProvider(),
+		Loggers: Map{
+			Info: loggerProvider(),
 		},
 	}
 }
@@ -61,9 +60,9 @@ func casesLogPrepareLog() []testsLogPrepareLog {
 	configSecond := configProvider()
 	loggerErr := loggerProvider()
 	loggerErr.Strategies = append(loggerErr.Strategies, file.Get(""))
-	configSecond.Loggers = logger.Map{
-		logger.Info: loggerProvider(),
-		logger.Err:  loggerErr,
+	configSecond.Loggers = Map{
+		Info: loggerProvider(),
+		Err:  loggerErr,
 	}
 	return []testsLogPrepareLog{
 		{
