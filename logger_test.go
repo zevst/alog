@@ -4,29 +4,14 @@
 // Telegram: https://t.me/Apologiz
 ////////////////////////////////////////////////////////////////////////////////
 
-package logger
+package alog
 
 import (
-	"fmt"
 	"io"
 	"testing"
 
 	"github.com/mylockerteam/alog/strategy/file"
-	"github.com/mylockerteam/alog/strategy/standart"
-	"github.com/mylockerteam/alog/util"
 )
-
-const testMsg = "Hello, ALog!"
-
-func loggerProvider() *Logger {
-	return &Logger{
-		Channel: make(chan string, 1),
-		Strategies: []io.Writer{
-			file.Get(fmt.Sprintf("/tmp/%s/", util.RandString(10))),
-			standart.Get(),
-		},
-	}
-}
 
 type argsLoggerWriteMessage struct {
 	msg string

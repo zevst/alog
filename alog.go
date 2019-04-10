@@ -15,7 +15,6 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/mylockerteam/alog/logger"
 	"github.com/mylockerteam/alog/strategy/file"
 	"github.com/mylockerteam/alog/strategy/standart"
 )
@@ -28,7 +27,7 @@ const (
 
 // Config contains settings and registered loggers
 type Config struct {
-	Loggers        logger.Map
+	Loggers        Map
 	TimeFormat     string
 	IgnoreFileLine bool
 }
@@ -59,21 +58,21 @@ func Default(chanBuffer uint) Writer {
 	return &Log{config: config}
 }
 
-func getDefaultLoggerMap(chanBuffer uint) logger.Map {
-	return logger.Map{
-		logger.Info: &logger.Logger{
+func getDefaultLoggerMap(chanBuffer uint) Map {
+	return Map{
+		Info: &Logger{
 			Channel: make(chan string, chanBuffer),
 			Strategies: []io.Writer{
 				&file.Strategy{File: os.Stdout},
 			},
 		},
-		logger.Wrn: &logger.Logger{
+		Wrn: &Logger{
 			Channel: make(chan string, chanBuffer),
 			Strategies: []io.Writer{
 				&file.Strategy{File: os.Stdout},
 			},
 		},
-		logger.Err: &logger.Logger{
+		Err: &Logger{
 			Channel: make(chan string, chanBuffer),
 			Strategies: []io.Writer{
 				&file.Strategy{File: os.Stderr},
@@ -84,10 +83,10 @@ func getDefaultLoggerMap(chanBuffer uint) logger.Map {
 
 func printNotConfiguredMessage(code uint, skip int) {
 	if _, fileName, fileLine, ok := runtime.Caller(skip); ok {
-		log.Println(fmt.Sprintf("%s:%d Logger %s not configured", fileName, fileLine, logger.Name(code)))
+		log.Println(fmt.Sprintf("%s:%d Logger %s not configured", fileName, fileLine, Name(code)))
 		return
 	}
-	log.Println(fmt.Sprintf("Logger %s not configured", logger.Name(code)))
+	log.Println(fmt.Sprintf("Logger %s not configured", Name(code)))
 }
 
 // GetLoggerInterfaceByType returns io.Writer interface for logging in third-party libraries
@@ -101,55 +100,59 @@ func (a *Log) GetLoggerInterfaceByType(loggerType uint) io.Writer {
 
 // Info method for recording informational messages
 func (a *Log) Info(msg string) *Log {
-	if l := a.config.Loggers[logger.Info]; l != nil {
-		l.Channel <- a.prepareLog(time.Now(), msg, 2)
+	if l := a.config.Loggers[Info]; l != nil {
+		prepareLog := a.prepareLog(time.Now(), msg, 2)
+		l.Channel <- fmt.Sprintf("[%s] %s", Name(Info), prepareLog)
 	} else {
-		printNotConfiguredMessage(logger.Info, 2)
+		printNotConfiguredMessage(Info, 2)
 	}
 	return a
 }
 
 // Infof method of recording formatted informational messages
 func (a *Log) Infof(format string, p ...interface{}) *Log {
-	if l := a.config.Loggers[logger.Info]; l != nil {
-		l.Channel <- a.prepareLog(time.Now(), fmt.Sprintf(format, p...), 2)
+	if l := a.config.Loggers[Info]; l != nil {
+		prepareLog := a.prepareLog(time.Now(), fmt.Sprintf(format, p...), 2)
+		l.Channel <- fmt.Sprintf("[%s] %s", Name(Info), prepareLog)
 	} else {
-		printNotConfiguredMessage(logger.Info, 2)
+		printNotConfiguredMessage(Info, 2)
 	}
 	return a
 }
 
 // Warning method for recording warning messages
 func (a *Log) Warning(msg string) *Log {
-	if a.config.Loggers[logger.Wrn] != nil {
-		a.config.Loggers[logger.Wrn].Channel <- a.prepareLog(time.Now(), msg, 2)
+	if a.config.Loggers[Wrn] != nil {
+		prepareLog := a.prepareLog(time.Now(), msg, 2)
+		a.config.Loggers[Wrn].Channel <- fmt.Sprintf("[%s] %s", Name(Wrn), prepareLog)
 	} else {
-		printNotConfiguredMessage(logger.Wrn, 2)
+		printNotConfiguredMessage(Wrn, 2)
 	}
 	return a
 }
 
 // Method for recording errors without stack
 func (a *Log) Error(err error) *Log {
-	if a.config.Loggers[logger.Err] != nil {
+	if a.config.Loggers[Err] != nil {
 		if err != nil {
-			a.config.Loggers[logger.Err].Channel <- a.prepareLog(time.Now(), err.Error(), 2)
+			prepareLog := a.prepareLog(time.Now(), err.Error(), 2)
+			a.config.Loggers[Err].Channel <- fmt.Sprintf("[%s] %s", Name(Err), prepareLog)
 		}
 	} else {
-		printNotConfiguredMessage(logger.Err, 2)
+		printNotConfiguredMessage(Err, 2)
 	}
 	return a
 }
 
 // ErrorDebug method for recording errors with stack
 func (a *Log) ErrorDebug(err error) *Log {
-	if a.config.Loggers[logger.Err] != nil {
+	if a.config.Loggers[Err] != nil {
 		if err != nil {
 			msg := fmt.Sprintf(messageFormatErrorDebug, a.prepareLog(time.Now(), err.Error(), 2), string(debug.Stack()))
-			a.config.Loggers[logger.Err].Channel <- msg
+			a.config.Loggers[Err].Channel <- fmt.Sprintf("[%s] %s", Name(Err), msg)
 		}
 	} else {
-		printNotConfiguredMessage(logger.Err, 2)
+		printNotConfiguredMessage(Err, 2)
 	}
 	return a
 }

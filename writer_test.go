@@ -12,7 +12,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mylockerteam/alog/logger"
 	"github.com/mylockerteam/alog/strategy/standart"
 )
 
@@ -30,8 +29,8 @@ type testsLogInfo struct {
 func casesLogInfo() []testsLogInfo {
 	info := configProvider()
 	wrn := &Config{
-		Loggers: logger.Map{
-			logger.Wrn: loggerProvider(),
+		Loggers: Map{
+			Wrn: loggerProvider(),
 		},
 	}
 	return []testsLogInfo{
@@ -80,8 +79,8 @@ type testsLogInfof struct {
 func casesLogInfof() []testsLogInfof {
 	info := configProvider()
 	wrn := &Config{
-		Loggers: logger.Map{
-			logger.Wrn: loggerProvider(),
+		Loggers: Map{
+			Wrn: loggerProvider(),
 		},
 	}
 	return []testsLogInfof{
@@ -129,8 +128,8 @@ type testsLogWarning struct {
 func casesLogWarning() []testsLogWarning {
 	info := configProvider()
 	wrn := &Config{
-		Loggers: logger.Map{
-			logger.Wrn: loggerProvider(),
+		Loggers: Map{
+			Wrn: loggerProvider(),
 		},
 	}
 	return []testsLogWarning{
@@ -178,13 +177,13 @@ func casesPrintNotConfiguredMessage() []testsPrintNotConfiguredMessage {
 	return []testsPrintNotConfiguredMessage{
 		{
 			args: argsPrintNotConfiguredMessage{
-				code: logger.Info,
+				code: Info,
 				skip: 2,
 			},
 		},
 		{
 			args: argsPrintNotConfiguredMessage{
-				code: logger.Info,
+				code: Info,
 				skip: 1000,
 			},
 		},
@@ -214,13 +213,13 @@ type testsLogGetLoggerInterfaceByType struct {
 func casesLogGetLoggerInterfaceByType() []testsLogGetLoggerInterfaceByType {
 	config := configProvider()
 	wrn := &Config{
-		Loggers: logger.Map{
-			logger.Wrn: loggerProvider(),
+		Loggers: Map{
+			Wrn: loggerProvider(),
 		},
 	}
 	err := &Config{
-		Loggers: logger.Map{
-			logger.Err: loggerProvider(),
+		Loggers: Map{
+			Err: loggerProvider(),
 		},
 	}
 	return []testsLogGetLoggerInterfaceByType{
@@ -229,27 +228,27 @@ func casesLogGetLoggerInterfaceByType() []testsLogGetLoggerInterfaceByType {
 				config: config,
 			},
 			args: argsLogGetLoggerInterfaceByType{
-				loggerType: logger.Info,
+				loggerType: Info,
 			},
-			want: config.Loggers[logger.Info],
+			want: config.Loggers[Info],
 		},
 		{
 			fields: &Log{
 				config: wrn,
 			},
 			args: argsLogGetLoggerInterfaceByType{
-				loggerType: logger.Wrn,
+				loggerType: Wrn,
 			},
-			want: wrn.Loggers[logger.Wrn],
+			want: wrn.Loggers[Wrn],
 		},
 		{
 			fields: &Log{
 				config: err,
 			},
 			args: argsLogGetLoggerInterfaceByType{
-				loggerType: logger.Err,
+				loggerType: Err,
 			},
-			want: err.Loggers[logger.Err],
+			want: err.Loggers[Err],
 		},
 		{
 			fields: &Log{
@@ -288,8 +287,8 @@ type testsLogError struct {
 func casesLogError() []testsLogError {
 	info := configProvider()
 	err := &Config{
-		Loggers: logger.Map{
-			logger.Err: loggerProvider(),
+		Loggers: Map{
+			Err: loggerProvider(),
 		},
 	}
 	return []testsLogError{
@@ -348,8 +347,8 @@ type testsLogErrorDebug struct {
 func casesLogErrorDebug() []testsLogErrorDebug {
 	info := configProvider()
 	err := &Config{
-		Loggers: logger.Map{
-			logger.Err: loggerProvider(),
+		Loggers: Map{
+			Err: loggerProvider(),
 		},
 	}
 	return []testsLogErrorDebug{
